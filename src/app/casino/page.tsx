@@ -1,9 +1,10 @@
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
-import { auth, signOut } from "@/auth";
+import { auth } from "@/auth";
+import { AppShell } from "@/components/shell/app-shell";
 import { db } from "@/db";
 import { users } from "@/db/schema";
-import { formatCredits } from "@/lib/money";
+import { games } from "@/lib/nav";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Casino · gamblino" };
@@ -19,43 +20,55 @@ export default async function CasinoPage() {
   if (!row) redirect("/signin");
 
   return (
-    <main className="flex flex-1 flex-col gap-10 px-8 py-16">
-      <header className="flex items-start justify-between gap-6">
-        <div className="space-y-2">
-          <p className="text-sm uppercase tracking-wider text-[var(--color-muted)]">Casino</p>
-          <h1 className="font-display text-5xl font-semibold tracking-tight">
+    <AppShell balance={row.balance} email={row.email} name={row.name}>
+      <div className="flex flex-1 flex-col gap-10 px-6 py-10 lg:px-10 lg:py-14">
+        <header className="flex flex-col gap-2">
+          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--color-muted)]">
+            Lobby
+          </p>
+          <h1 className="font-display text-4xl font-semibold tracking-tight lg:text-5xl">
             Welcome{row.name ? `, ${row.name}` : ""}
           </h1>
-          <p className="text-[var(--color-muted)]">Signed in as {row.email}</p>
-        </div>
-        <form
-          action={async () => {
-            "use server";
-            await signOut({ redirectTo: "/" });
-          }}
-        >
-          <button
-            type="submit"
-            className="rounded-[10px] border border-[var(--color-border)] px-4 py-2 text-sm"
-          >
-            Sign out
-          </button>
-        </form>
-      </header>
+          <p className="max-w-xl text-sm text-[var(--color-muted)]">
+            Pick an original. Your balance sits in the top bar — every bet passes through the atomic
+            wallet path.
+          </p>
+        </header>
 
-      <section
-        data-testid="balance-card"
-        className="rounded-[14px] border border-[var(--color-border)] bg-[var(--color-surface)] p-8"
-      >
-        <p className="text-sm uppercase tracking-wider text-[var(--color-muted)]">Balance</p>
-        <p
-          data-testid="balance"
-          className="font-mono text-6xl font-semibold tabular-nums text-[var(--color-accent-hi)]"
-        >
-          {formatCredits(row.balance)}
-        </p>
-        <p className="mt-2 text-sm text-[var(--color-muted)]">credits</p>
-      </section>
-    </main>
+        <section aria-labelledby="games-heading" className="flex flex-col gap-4">
+          <div className="flex items-baseline justify-between">
+            <h2 id="games-heading" className="font-display text-xl font-semibold tracking-tight">
+              Originals
+            </h2>
+            <p className="text-xs text-[var(--color-muted)]">Unlocking as the build advances</p>
+          </div>
+          <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {games
+              .filter((g) => g.enabled)
+              .map((game) => (
+                <li
+                  key={game.slug}
+                  className="group flex flex-col gap-4 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 transition-colors"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex size-10 items-center justify-center rounded-md bg-[var(--color-elevated)]">
+                      <game.icon aria-hidden className="size-5 text-[var(--color-accent-hi)]" />
+                    </div>
+                    <span className="rounded-[var(--radius-chip)] border border-[var(--color-border)] px-2 py-0.5 text-[10px] uppercase tracking-wider text-[var(--color-muted)]">
+                      {game.status === "live" ? "Live" : "Soon"}
+                    </span>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <h3 className="font-display text-xl font-semibold">{game.label}</h3>
+                    <p className="text-sm text-[var(--color-muted)]">
+                      Provably fair · Play-money credits
+                    </p>
+                  </div>
+                </li>
+              ))}
+          </ul>
+        </section>
+      </div>
+    </AppShell>
   );
 }
