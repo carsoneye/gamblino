@@ -1,14 +1,13 @@
 "use server";
 
 import { hash } from "bcryptjs";
-import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { signIn } from "@/auth";
 import { db } from "@/db";
 import { users } from "@/db/schema";
 import { logger } from "@/lib/logger";
-import { grantSignupBonus } from "./signup-bonus";
+import { grantSignupBonusWithin } from "./signup-bonus";
 
 const signupSchema = z.object({
   email: z
@@ -23,6 +22,12 @@ export type SignupState = {
   error?: string;
   fieldErrors?: Partial<Record<"email" | "password" | "name", string>>;
 };
+
+const PG_UNIQUE_VIOLATION = "23505";
+const isUniqueViolation = (err: unknown): boolean =>
+  typeof err === "object" && err !== null && "code" in err && err.code === PG_UNIQUE_VIOLATION;
+
+type CreateResult = { ok: true; id: string } | { ok: false; reason: "email_taken" | "insert" };
 
 export async function signupAction(
   _prev: SignupState | undefined,
@@ -42,31 +47,33 @@ export async function signupAction(
     return { fieldErrors };
   }
   const { email, password, name } = parsed.data;
-
-  const existing = await db.query.users.findFirst({
-    where: eq(users.email, email),
-    columns: { id: true },
-  });
-  if (existing) return { fieldErrors: { email: "That email is already registered" } };
-
   const passwordHash = await hash(password, 10);
-  const [row] = await db
-    .insert(users)
-    .values({ email, name: name ?? null, passwordHash })
-    .returning({ id: users.id });
-  if (!row) return { error: "Could not create account" };
 
+  let created: CreateResult;
   try {
-    await grantSignupBonus(row.id);
+    created = await db.transaction(async (tx): Promise<CreateResult> => {
+      const [row] = await tx
+        .insert(users)
+        .values({ email, name: name ?? null, passwordHash })
+        .returning({ id: users.id });
+      if (!row) return { ok: false, reason: "insert" };
+      await grantSignupBonusWithin(tx, row.id);
+      return { ok: true, id: row.id };
+    });
   } catch (err) {
-    logger.error({ err, userId: row.id }, "signup.grantBonusFailed");
-    return { error: "Could not allocate signup credits" };
+    if (isUniqueViolation(err)) {
+      return { fieldErrors: { email: "That email is already registered" } };
+    }
+    logger.error({ err }, "signup.txFailed");
+    return { error: "Could not create account" };
   }
+
+  if (!created.ok) return { error: "Could not create account" };
 
   try {
     await signIn("credentials", { email, password, redirect: false });
   } catch (err) {
-    logger.error({ err, userId: row.id }, "signup.signInFailed");
+    logger.error({ err, userId: created.id }, "signup.signInFailed");
     return { error: "Account created, but sign-in failed. Try signing in." };
   }
 

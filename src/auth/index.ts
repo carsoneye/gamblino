@@ -12,8 +12,11 @@ import { grantSignupBonus } from "@/lib/auth/signup-bonus";
 import { authConfig } from "./config";
 
 const credentialsSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(8).max(128),
+  email: z
+    .string()
+    .email()
+    .transform((v) => v.trim().toLowerCase()),
+  password: z.string().min(1).max(128),
 });
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
@@ -38,7 +41,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         if (!parsed.success) return null;
         const { email, password } = parsed.data;
         const row = await db.query.users.findFirst({
-          where: eq(users.email, email.toLowerCase()),
+          where: eq(users.email, email),
           columns: { id: true, email: true, name: true, image: true, passwordHash: true },
         });
         if (!row?.passwordHash) return null;
@@ -57,6 +60,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             : undefined,
       },
       from: env.EMAIL_FROM,
+      normalizeIdentifier(identifier) {
+        const [local, domain] = identifier.toLowerCase().trim().split("@");
+        if (!domain || domain.includes(",")) throw new Error("invalid email");
+        return `${local}@${domain}`;
+      },
     }),
   ],
   events: {
