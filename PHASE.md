@@ -8,23 +8,23 @@ Single source of truth for where the project is in the 16-phase build plan. Comm
 
 ## Current
 
-- **Phase:** 1 — Boot
-- **Branch:** `phase/01-boot`
-- **Status:** in progress — PR open
-- **Kickoff:** `/feature-dev phase 1 — next-app init, Biome, shadcn v4, Sentry, Pino, env.ts`
-- **Verification:** `bun run dev` serves `/`; Sentry test event arrives; `bun x biome check` clean
+- **Phase:** 2 — Design tokens
+- **Branch:** `phase/02-design-tokens`
+- **Status:** not started
+- **Kickoff:** `/feature-dev phase 2 — design tokens (OKLCH via @theme inline, Clash/General Sans/Geist Mono, conic mesh + grain)`
+- **Verification:** tokens resolve in `globals.css`; no hex literals in components; fonts load; mesh+grain visible on `/`
 
 ## Done
 
 | # | Phase | Branch | PR | Verified |
 |---|---|---|---|---|
 | 0 | Pre-reqs | `main` | — (direct) | 2026-04-17 · CI skeleton green, ADRs 0001-0005 committed |
+| 1 | Boot | `phase/01-boot` | [#1](https://github.com/carsoneye/gamblino/pull/1) | 2026-04-18 · CI green (lint/typecheck/test/build + playwright); `bun run dev` serves `/`; `bun x biome check` clean |
 
 ## Upcoming
 
 | # | Phase | Depends on |
 |---|---|---|
-| 2 | Design tokens | 1 |
 | 3 | Infra (docker + drizzle + migrations) | 1 |
 | 4 | Auth | 3 |
 | 5 | Wallet (`transact.ts`) | 4 |
