@@ -1,9 +1,9 @@
 import type { GameSlug } from "@/lib/nav";
 
-const ACCENT = "oklch(0.75 0.22 145)";
-const ACCENT_HI = "oklch(0.82 0.22 145)";
-const SURFACE = "oklch(0.22 0.03 260)";
-const MUTED = "oklch(0.62 0.02 260)";
+const ACCENT = "oklch(0.78 0.13 82)";
+const ACCENT_HI = "oklch(0.87 0.12 85)";
+const SURFACE = "oklch(0.19 0 0)";
+const MUTED = "oklch(0.58 0.01 90)";
 
 export function GameArt({ game, className }: { game: GameSlug; className?: string }) {
   if (game === "crash") return <CrashArt className={className} />;

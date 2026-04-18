@@ -14,31 +14,33 @@ export function TopBar({
   return (
     <div
       data-testid="top-bar"
-      className="col-start-2 flex h-16 items-center gap-4 border-b border-[var(--color-border)] bg-[var(--color-bg-deep)] px-5 lg:px-6"
+      className="col-start-2 flex h-16 items-center gap-6 border-b border-[var(--color-border)]/60 bg-[var(--color-bg-deep)] px-6 lg:px-8"
     >
-      <div className="ml-auto flex items-center gap-5">
-        <div data-testid="balance-card" className="flex flex-col items-end leading-none">
-          <span className="text-[11px] font-medium text-[var(--color-muted)]">Credits</span>
+      <div className="ml-auto flex items-center gap-6">
+        <div data-testid="balance-card" className="flex items-baseline gap-2 leading-none">
+          <span className="text-[10px] font-medium uppercase tracking-[0.22em] text-[var(--color-accent)]">
+            Credits
+          </span>
           <span
             data-testid="balance"
-            className="numeric mt-1 text-2xl font-semibold text-[var(--color-text)]"
+            className="numeric text-xl font-semibold tracking-tight text-[var(--color-text)]"
           >
             {formatCredits(balance)}
           </span>
         </div>
 
-        <div className="hidden h-8 w-px bg-[var(--color-border)] sm:block" />
+        <div className="hidden h-6 w-px bg-[var(--color-border)] sm:block" />
 
-        <div className="hidden items-center gap-3 sm:flex">
+        <div className="hidden items-center gap-4 sm:flex">
           <span
             aria-hidden
-            className="flex size-9 items-center justify-center rounded-full bg-[var(--color-surface)] font-display text-sm font-semibold text-[var(--color-text)]"
+            className="flex size-8 items-center justify-center rounded-full border border-[var(--color-border)] font-display text-sm font-medium text-[var(--color-text)]"
           >
             {initial}
           </span>
           <div className="flex flex-col text-right leading-tight">
             {name ? (
-              <span className="hidden text-sm font-semibold text-[var(--color-text)] xl:inline">
+              <span className="hidden text-sm font-medium text-[var(--color-text)] xl:inline">
                 {name}
               </span>
             ) : null}
@@ -54,7 +56,7 @@ export function TopBar({
           >
             <button
               type="submit"
-              className="rounded-[var(--radius-md)] border border-[var(--color-border)] px-4 py-2 text-sm font-medium text-[var(--color-muted)] transition-colors duration-[var(--duration-fast)] hover:border-[var(--color-accent)] hover:text-[var(--color-text)]"
+              className="text-sm font-medium text-[var(--color-muted)] transition-colors duration-[var(--duration-fast)] hover:text-[var(--color-text)]"
             >
               Sign out
             </button>

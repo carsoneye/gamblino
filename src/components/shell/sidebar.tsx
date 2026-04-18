@@ -14,26 +14,32 @@ export function Sidebar() {
       aria-label="Primary"
       className="row-span-2 hidden flex-col border-r border-[var(--color-border)] bg-[var(--color-bg-deep)] md:flex md:w-16 lg:w-60"
     >
-      <div className="flex h-16 items-center px-3 lg:px-5">
+      <div className="flex h-16 items-center border-b border-[var(--color-border)]/60 px-3 lg:px-5">
         <Link
           href="/casino"
-          className="group inline-flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]"
+          className="group inline-flex items-baseline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]"
         >
+          <span className="hidden font-display text-lg font-semibold tracking-[-0.04em] text-[var(--color-text)] lg:inline">
+            gamblino
+          </span>
           <span
             aria-hidden
-            className="flex size-7 shrink-0 items-center justify-center rounded-sm bg-[var(--color-accent)] font-display text-sm font-bold text-[var(--color-bg-deep)]"
+            className="hidden font-display text-lg font-semibold text-[var(--color-accent)] lg:inline"
           >
-            g
+            .
           </span>
-          <span className="hidden font-display text-lg font-semibold tracking-[-0.02em] text-[var(--color-text)] lg:inline">
-            gamblino
+          <span
+            aria-hidden
+            className="font-display text-xl font-semibold text-[var(--color-accent)] lg:hidden"
+          >
+            g.
           </span>
           <span className="sr-only lg:hidden">gamblino</span>
         </Link>
       </div>
 
-      <div className="hidden px-3 pb-3 lg:block">
-        <div className="grid grid-cols-2 gap-1 rounded-[var(--radius-md)] bg-[var(--color-surface)] p-1">
+      <div className="hidden px-4 py-4 lg:block">
+        <div className="flex items-center gap-5 text-sm">
           {PRODUCT_TABS.map((tab) => (
             <button
               key={tab.label}
@@ -42,8 +48,8 @@ export function Sidebar() {
               aria-pressed={tab.active}
               className={
                 tab.active
-                  ? "rounded-[6px] bg-[var(--color-accent)] px-2 py-1.5 text-xs font-semibold text-[var(--color-bg-deep)]"
-                  : "rounded-[6px] px-2 py-1.5 text-xs font-semibold text-[var(--color-muted)] disabled:cursor-not-allowed"
+                  ? "relative font-semibold text-[var(--color-text)] after:absolute after:-bottom-1 after:left-0 after:h-px after:w-full after:bg-[var(--color-accent)]"
+                  : "font-medium text-[var(--color-muted)] disabled:cursor-not-allowed"
               }
             >
               {tab.label}

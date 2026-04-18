@@ -37,12 +37,12 @@
   --color-input: var(--elevated);
   --color-ring: var(--accent);
 
-  --radius-chip: 4px;
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 20px;
-  --radius-2xl: 28px;
+  --radius-chip: 2px;
+  --radius-sm: 3px;
+  --radius-md: 4px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-2xl: 20px;
 
   --ease-default: cubic-bezier(0.22, 1, 0.36, 1);
   --duration-fast: 120ms;
@@ -51,17 +51,17 @@
 }
 
 :root {
-  --bg-deep: oklch(0.12 0.02 260);
-  --bg: oklch(0.15 0.02 260);
-  --surface: oklch(0.18 0.02 260);
-  --elevated: oklch(0.22 0.03 260);
-  --accent: oklch(0.75 0.22 145);
-  --accent-hi: oklch(0.82 0.22 145);
-  --win: oklch(0.75 0.22 145);
-  --loss: oklch(0.62 0.22 25);
-  --text: oklch(0.96 0.01 260);
-  --muted: oklch(0.62 0.02 260);
-  --border: color-mix(in oklab, white 6%, transparent);
+  --bg-deep: oklch(0.09 0 0);
+  --bg: oklch(0.12 0 0);
+  --surface: oklch(0.15 0 0);
+  --elevated: oklch(0.19 0 0);
+  --accent: oklch(0.78 0.13 82);
+  --accent-hi: oklch(0.87 0.12 85);
+  --win: oklch(0.78 0.13 82);
+  --loss: oklch(0.58 0.2 25);
+  --text: oklch(0.96 0.01 90);
+  --muted: oklch(0.58 0.01 90);
+  --border: color-mix(in oklab, white 5%, transparent);
 }
 
 @layer base {
