@@ -8,11 +8,11 @@ Single source of truth for where the project is in the 16-phase build plan. Comm
 
 ## Current
 
-- **Phase:** 5 — Wallet (`transact.ts`)
-- **Branch:** `phase/05-wallet`
+- **Phase:** 6 — AppShell (Sidebar/TopBar/ChatRail)
+- **Branch:** `phase/06-appshell`
 - **Status:** not started
-- **Kickoff:** `/feature-dev phase 5 — wallet (atomic transact.ts; SELECT FOR UPDATE on users; append-only transactions)`
-- **Verification:** `bun test` — concurrent debits never oversell; idempotency key dedupes; append-only trigger blocks UPDATE/DELETE
+- **Kickoff:** `/feature-dev phase 6 — appshell (Sidebar + TopBar + ChatRail stub; landing page; asymmetric 7/5 hero)`
+- **Verification:** `/` + `/casino` render; Lighthouse a11y ≥ 95
 
 ## Done
 
@@ -23,12 +23,12 @@ Single source of truth for where the project is in the 16-phase build plan. Comm
 | 2 | Design tokens | `phase/02-design-tokens` | [#2](https://github.com/carsoneye/gamblino/pull/2) | 2026-04-18 · CI green; OKLCH tokens via `@theme inline`; Clash/General Sans/Geist Mono load; mesh+grain atmosphere; `/dev/tokens` sandbox |
 | 3 | Infra | `phase/03-infra` | [#3](https://github.com/carsoneye/gamblino/pull/3) | 2026-04-18 · CI green; `docker compose up -d` → `bun run db:push` green; 6 tables; `bun run db:studio` reachable; append-only triggers block `UPDATE`/`DELETE` on `transactions` (ADR-0005) |
 | 4 | Auth | `phase/04-auth` | [#4](https://github.com/carsoneye/gamblino/pull/4) | 2026-04-18 · CI green (biome/typecheck/unit/build/e2e); Auth.js v5 credentials + magic-link; 10k signup grant atomic via `SELECT … FOR UPDATE` + idempotency key; Playwright: signup → `/casino` with `10,000` balance; anon `/casino` → `/signin`; ADR-0007 |
+| 5 | Wallet | `phase/05-wallet` | [#5](https://github.com/carsoneye/gamblino/pull/5) | 2026-04-18 · CI green (biome/typecheck/unit/build/e2e); `transact.ts` + `transactWithin` with `SELECT … FOR UPDATE`; 13 DB-backed wallet tests green (concurrent debit, overdraft, idempotency dedupe, append-only trigger blocks UPDATE/DELETE, composition rollback); `grantSignupBonus` refactored onto `transactWithin`; ADR-0008 |
 
 ## Upcoming
 
 | # | Phase | Depends on |
 |---|---|---|
-| 6 | AppShell (Sidebar/TopBar/ChatRail) | 4 |
 | 7 | Cmd+K | 6 |
 | 8 | Game primitives | 5 |
 | 9 | Provably-fair | 8 |
