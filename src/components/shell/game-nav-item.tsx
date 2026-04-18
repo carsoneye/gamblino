@@ -40,9 +40,7 @@ export function GameNavItem({
         trailing ? (
           <span className="shrink-0">{trailing}</span>
         ) : pending ? (
-          <span className="rounded-[var(--radius-chip)] border border-[var(--color-border)] px-1.5 py-0.5 text-[10px] uppercase tracking-[0.18em] text-[var(--color-muted)]">
-            Soon
-          </span>
+          <span className="text-[11px] font-medium text-[var(--color-muted)]">Soon</span>
         ) : null
       ) : null}
     </div>

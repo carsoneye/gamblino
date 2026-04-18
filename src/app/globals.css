@@ -1,4 +1,4 @@
-@import url("https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&f[]=general-sans@400,500,600,700&display=swap");
+@import url("https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&f[]=general-sans@400,500,600,700&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -37,7 +37,7 @@
   --color-input: var(--elevated);
   --color-ring: var(--accent);
 
-  --radius-chip: 2px;
+  --radius-chip: 4px;
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 14px;
@@ -46,21 +46,21 @@
 
   --ease-default: cubic-bezier(0.22, 1, 0.36, 1);
   --duration-fast: 120ms;
-  --duration-default: 180ms;
+  --duration-default: 200ms;
   --duration-slow: 320ms;
 }
 
 :root {
-  --bg-deep: oklch(0.09 0.03 265);
-  --bg: oklch(0.14 0.04 260);
-  --surface: oklch(0.19 0.05 260);
-  --elevated: oklch(0.23 0.06 260);
-  --accent: oklch(0.82 0.17 180);
-  --accent-hi: oklch(0.92 0.15 180);
-  --win: oklch(0.68 0.25 350);
-  --loss: oklch(0.65 0.22 15);
-  --text: oklch(0.93 0.02 260);
-  --muted: oklch(0.62 0.04 260);
+  --bg-deep: oklch(0.12 0.02 260);
+  --bg: oklch(0.15 0.02 260);
+  --surface: oklch(0.18 0.02 260);
+  --elevated: oklch(0.22 0.03 260);
+  --accent: oklch(0.75 0.22 145);
+  --accent-hi: oklch(0.82 0.22 145);
+  --win: oklch(0.75 0.22 145);
+  --loss: oklch(0.62 0.22 25);
+  --text: oklch(0.96 0.01 260);
+  --muted: oklch(0.62 0.02 260);
   --border: color-mix(in oklab, white 6%, transparent);
 }
 
@@ -79,7 +79,7 @@
   body {
     position: relative;
     color: var(--text);
-    background: var(--bg);
+    background: var(--bg-deep);
     font-family: var(--font-sans);
     font-feature-settings: "ss01", "cv11";
   }
@@ -87,53 +87,27 @@
   body::before {
     content: "";
     position: fixed;
-    inset: -50vmax;
-    width: 200vmax;
-    height: 200vmax;
-    background: conic-gradient(
-      from 0deg at 50% 50%,
-      oklch(0.82 0.17 180 / 0.08),
-      oklch(0.68 0.25 350 / 0.08),
-      oklch(0.14 0.04 260 / 0),
-      oklch(0.82 0.17 180 / 0.08)
-    );
-    animation: mesh-rotate 180s linear infinite;
-    pointer-events: none;
-    z-index: -2;
-    will-change: transform;
-  }
-
-  body::after {
-    content: "";
-    position: fixed;
     inset: 0;
     background: url("/grain.svg");
-    opacity: 0.04;
+    opacity: 0.035;
     pointer-events: none;
     z-index: -1;
     mix-blend-mode: overlay;
   }
 
-  @keyframes mesh-rotate {
-    to {
-      transform: rotate(360deg);
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    body::before {
-      animation: none;
-    }
-  }
-
   h1,
-  h2,
+  h2 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+  }
+
   h3,
   h4,
   h5,
   h6 {
-    font-family: var(--font-display);
-    letter-spacing: -0.02em;
+    font-family: var(--font-sans);
+    font-weight: 600;
+    letter-spacing: -0.01em;
   }
 
   .font-display {

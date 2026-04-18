@@ -2,12 +2,12 @@ import { expect, test } from "@playwright/test";
 
 const uniqueEmail = () => `test+${Date.now()}-${Math.floor(Math.random() * 1e6)}@gamblino.test`;
 
-test("landing / renders asymmetric hero with CTAs and no casino shell", async ({ page }) => {
+test("landing / renders editorial hero with CTAs and no casino shell", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { level: 1 })).toContainText(/house rules/i);
-  await expect(page.getByRole("heading", { level: 1 })).toContainText(/zero stakes/i);
-  await expect(page.getByRole("link", { name: /take 10,000 credits/i })).toBeVisible();
-  await expect(page.getByRole("link", { name: /or sign in/i })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1 })).toContainText(/play free/i);
+  await expect(page.getByRole("heading", { level: 1 })).toContainText(/win nothing real/i);
+  await expect(page.getByRole("link", { name: /take 10,000 credits/i }).first()).toBeVisible();
+  await expect(page.getByRole("link", { name: /^sign in$/i }).first()).toBeVisible();
   await expect(page.getByRole("navigation", { name: "Main" })).toHaveCount(0);
 });
 

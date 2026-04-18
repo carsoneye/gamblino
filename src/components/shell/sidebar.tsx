@@ -1,53 +1,63 @@
 import Link from "next/link";
 import { GameNavItem } from "@/components/shell/game-nav-item";
-import { LiveDot } from "@/components/shell/live-dot";
 import { NavLink } from "@/components/shell/nav-link";
-import {
-  FLOOR_HEADCOUNT,
-  FLOOR_PEAK_24H,
-  FLOOR_TOP_WIN_24H,
-  gameActivity,
-} from "@/lib/floor-activity";
 import { games, primaryNav } from "@/lib/nav";
 
+const PRODUCT_TABS = [
+  { label: "Casino", active: true },
+  { label: "Sports", active: false },
+] as const;
+
 export function Sidebar() {
-  const enabledGames = games.filter((g) => g.enabled);
   return (
     <aside
       aria-label="Primary"
-      className="row-span-2 hidden flex-col border-r border-[var(--color-border)] bg-[var(--color-bg-deep)]/70 backdrop-blur md:flex md:w-16 lg:w-72"
+      className="row-span-2 hidden flex-col border-r border-[var(--color-border)] bg-[var(--color-bg-deep)] md:flex md:w-16 lg:w-60"
     >
-      <div className="flex h-16 items-center gap-2 border-b border-[var(--color-border)] px-4 lg:px-5">
+      <div className="flex h-16 items-center px-3 lg:px-5">
         <Link
           href="/casino"
           className="group inline-flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]"
         >
           <span
             aria-hidden
-            className="flex size-8 items-center justify-center rounded-md border border-[var(--color-accent)]/40 bg-[var(--color-accent)]/10 font-display text-base font-semibold text-[var(--color-accent-hi)]"
-            style={{
-              boxShadow: "0 0 18px color-mix(in oklab, var(--color-accent) 30%, transparent)",
-            }}
+            className="flex size-7 shrink-0 items-center justify-center rounded-sm bg-[var(--color-accent)] font-display text-sm font-bold text-[var(--color-bg-deep)]"
           >
-            g.
+            g
           </span>
-          <span className="hidden flex-col leading-tight lg:flex">
-            <span className="font-display text-lg font-semibold tracking-tight">gamblino</span>
-            <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.2em] text-[var(--color-muted)]">
-              <LiveDot tone="teal" size="xs" />
-              Floor live
-            </span>
+          <span className="hidden font-display text-lg font-semibold tracking-[-0.02em] text-[var(--color-text)] lg:inline">
+            gamblino
           </span>
           <span className="sr-only lg:hidden">gamblino</span>
         </Link>
       </div>
 
+      <div className="hidden px-3 pb-3 lg:block">
+        <div className="grid grid-cols-2 gap-1 rounded-[var(--radius-md)] bg-[var(--color-surface)] p-1">
+          {PRODUCT_TABS.map((tab) => (
+            <button
+              key={tab.label}
+              type="button"
+              disabled={!tab.active}
+              aria-pressed={tab.active}
+              className={
+                tab.active
+                  ? "rounded-[6px] bg-[var(--color-accent)] px-2 py-1.5 text-xs font-semibold text-[var(--color-bg-deep)]"
+                  : "rounded-[6px] px-2 py-1.5 text-xs font-semibold text-[var(--color-muted)] disabled:cursor-not-allowed"
+              }
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <nav
         aria-label="Main"
-        className="flex flex-1 flex-col gap-7 overflow-y-auto px-2 py-5 lg:px-3"
+        className="flex flex-1 flex-col gap-5 overflow-y-auto px-2 py-2 lg:px-3"
       >
-        <div className="space-y-1">
-          <SectionLabel>House</SectionLabel>
+        <div className="flex flex-col gap-1">
+          <SectionLabel>Lobby</SectionLabel>
           <ul className="space-y-0.5">
             {primaryNav.map((item) => {
               const Icon = item.icon;
@@ -74,20 +84,11 @@ export function Sidebar() {
           </ul>
         </div>
 
-        <div className="space-y-1">
-          <SectionLabel>Floor</SectionLabel>
+        <div className="flex flex-col gap-1">
+          <SectionLabel>Originals</SectionLabel>
           <ul className="space-y-0.5">
-            {enabledGames.map((game) => {
+            {games.map((game) => {
               const Icon = game.icon;
-              const activity = gameActivity[game.slug];
-              const trailing = (
-                <span className="inline-flex items-center gap-1.5 text-[11px] text-[var(--color-muted)]">
-                  <LiveDot tone={activity.hot ? "magenta" : "teal"} size="xs" />
-                  <span className="numeric font-medium text-[var(--color-text)]">
-                    {activity.online}
-                  </span>
-                </span>
-              );
               return (
                 <li key={game.slug}>
                   <div className="lg:hidden">
@@ -103,7 +104,6 @@ export function Sidebar() {
                       label={game.label}
                       icon={<Icon className="size-4" aria-hidden />}
                       status={game.status}
-                      trailing={trailing}
                     />
                   </div>
                 </li>
@@ -112,65 +112,14 @@ export function Sidebar() {
           </ul>
         </div>
       </nav>
-
-      <div className="hidden flex-col gap-3 border-t border-[var(--color-border)] px-5 py-4 lg:flex">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--color-muted)]">
-          Tonight
-        </p>
-        <dl className="grid grid-cols-2 gap-3 text-xs">
-          <Stat label="On floor" value={FLOOR_HEADCOUNT.toLocaleString()} accent />
-          <Stat label="24h peak" value={FLOOR_PEAK_24H.toLocaleString()} />
-          <Stat label="Top win" value={FLOOR_TOP_WIN_24H.toLocaleString()} suffix="cr" magenta />
-          <Stat label="Real $" value="None" muted />
-        </dl>
-      </div>
     </aside>
   );
 }
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="hidden items-center gap-2 px-3 pb-2 lg:flex">
-      <span className="h-px flex-1 bg-[var(--color-border)]" />
-      <span className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[var(--color-muted)]">
-        {children}
-      </span>
-      <span className="h-px w-4 bg-[var(--color-accent)]/60" />
-    </div>
-  );
-}
-
-function Stat({
-  label,
-  value,
-  suffix,
-  accent,
-  magenta,
-  muted,
-}: {
-  label: string;
-  value: string;
-  suffix?: string;
-  accent?: boolean;
-  magenta?: boolean;
-  muted?: boolean;
-}) {
-  const color = accent
-    ? "var(--color-accent-hi)"
-    : magenta
-      ? "var(--color-win)"
-      : muted
-        ? "var(--color-muted)"
-        : "var(--color-text)";
-  return (
-    <div className="flex flex-col gap-0.5">
-      <dt className="text-[10px] uppercase tracking-[0.18em] text-[var(--color-muted)]">{label}</dt>
-      <dd className="numeric text-sm font-semibold" style={{ color }}>
-        {value}
-        {suffix ? (
-          <span className="ml-0.5 text-[10px] font-medium text-[var(--color-muted)]">{suffix}</span>
-        ) : null}
-      </dd>
+    <div className="hidden px-3 pb-1 lg:block">
+      <span className="text-[11px] font-medium text-[var(--color-muted)]">{children}</span>
     </div>
   );
 }

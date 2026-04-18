@@ -1,8 +1,7 @@
-import { FloorMark } from "@/components/marketing/floor-mark";
 import { Hero } from "@/components/marketing/hero";
 import { MarketingHeader } from "@/components/marketing/marketing-header";
 
-export const metadata = { title: "gamblino — Midnight Arcade" };
+export const metadata = { title: "gamblino — play free, win nothing real" };
 
 export default function Home() {
   return (
@@ -10,7 +9,6 @@ export default function Home() {
       <MarketingHeader />
       <main className="flex flex-1 flex-col">
         <Hero />
-        <FloorMark />
       </main>
     </div>
   );
