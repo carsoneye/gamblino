@@ -4,11 +4,10 @@ const uniqueEmail = () => `test+${Date.now()}-${Math.floor(Math.random() * 1e6)}
 
 test("landing / renders asymmetric hero with CTAs and no casino shell", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { level: 1 })).toContainText(
-    /social casino that doesn't ask/i,
-  );
-  await expect(page.getByRole("link", { name: /claim 10,000 credits/i })).toBeVisible();
-  await expect(page.getByRole("link", { name: /i already have an account/i })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1 })).toContainText(/house rules/i);
+  await expect(page.getByRole("heading", { level: 1 })).toContainText(/zero stakes/i);
+  await expect(page.getByRole("link", { name: /take 10,000 credits/i })).toBeVisible();
+  await expect(page.getByRole("link", { name: /or sign in/i })).toBeVisible();
   await expect(page.getByRole("navigation", { name: "Main" })).toHaveCount(0);
 });
 
