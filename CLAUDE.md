@@ -56,3 +56,9 @@ Bun 2 · Next.js 16.2 · React 19.2 · Tailwind v4 (Oxide) · shadcn/ui · Drizz
 ## Scaffold plan
 
 Full phased plan: `/Users/carsonidsinga/.claude/plans/greedy-honking-fairy.md`. Each phase = single session, single PR. Kick off with `/feature-dev <phase>`; invoke `/frontend-design` on UI phases.
+
+## Phase continuity
+
+- **`PHASE.md`** at repo root is the single source of truth for "where are we". The `SessionStart` hook prints its **Current** block into every fresh session — don't re-read the plan to orient.
+- Advance state with **`/next-phase`** (only between phases, after PR merges). It verifies the prior PR merged, rotates Current → Done, creates `phase/NN-slug`, and prints the kickoff.
+- During a phase: run `/feature-dev <phase>` in a fresh session against the phase branch. Do not bundle phases. Do not skip the PR.
