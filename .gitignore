@@ -1,0 +1,50 @@
+# deps
+node_modules
+.pnpm-store
+bun.lock
+
+# next
+.next
+out
+next-env.d.ts
+
+# env
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# build
+dist
+build
+*.tsbuildinfo
+
+# test
+coverage
+playwright-report
+test-results
+.nyc_output
+
+# OS
+.DS_Store
+Thumbs.db
+
+# editor
+.vscode
+.idea
+*.swp
+
+# logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+
+# drizzle — keep migrations, ignore generated meta snapshots we don't want tracked
+drizzle/meta/_journal.json.bak
+
+# sentry
+.sentryclirc
+
+# misc
+.turbo
+.vercel
