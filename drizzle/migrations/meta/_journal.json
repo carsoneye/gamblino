@@ -15,6 +15,13 @@
       "when": 1776492131974,
       "tag": "0001_append_only_transactions",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1776493551972,
+      "tag": "0002_condemned_avengers",
+      "breakpoints": true
     }
   ]
 }

@@ -74,6 +74,35 @@ jobs:
     runs-on: ubuntu-latest
     needs: check
     if: github.event_name == 'pull_request'
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: gamblino
+          POSTGRES_PASSWORD: gamblino
+          POSTGRES_DB: gamblino
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U gamblino"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://gamblino:gamblino@localhost:5432/gamblino
+      AUTH_SECRET: ci-ci-ci-ci-ci-ci-ci-ci-ci-ci-ci-ci
+      AUTH_URL: http://localhost:3000
+      EMAIL_FROM: ci@gamblino.local
+      EMAIL_SERVER_HOST: localhost
+      EMAIL_SERVER_PORT: "1025"
+      SENTRY_DSN: ""
+      SENTRY_ENVIRONMENT: ci
+      LOG_LEVEL: warn
+      FLAG_CRASH: "on"
+      FLAG_MINES: "on"
+      FLAG_PLINKO: "on"
+      WS_PORT: "3001"
+      NEXT_PUBLIC_WS_URL: ws://localhost:3001
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
     steps:
       - uses: actions/checkout@v4
       - name: detect playwright
@@ -90,6 +119,9 @@ jobs:
           bun-version: latest
       - run: bun install --frozen-lockfile
         if: steps.detect.outputs.present == 'true'
+      - name: migrate
+        if: steps.detect.outputs.present == 'true'
+        run: bun x drizzle-kit migrate
       - run: bun x playwright install --with-deps chromium
         if: steps.detect.outputs.present == 'true'
       - run: bun run e2e
