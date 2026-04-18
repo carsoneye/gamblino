@@ -10,7 +10,7 @@ Single source of truth for where the project is in the 16-phase build plan. Comm
 
 - **Phase:** 1 — Boot
 - **Branch:** `phase/01-boot`
-- **Status:** not started
+- **Status:** in progress — PR open
 - **Kickoff:** `/feature-dev phase 1 — next-app init, Biome, shadcn v4, Sentry, Pino, env.ts`
 - **Verification:** `bun run dev` serves `/`; Sentry test event arrives; `bun x biome check` clean
 

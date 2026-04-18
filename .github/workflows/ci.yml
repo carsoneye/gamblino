@@ -63,6 +63,7 @@ jobs:
         run: bun test
 
       - name: migrate
+        if: hashFiles('drizzle.config.ts', 'drizzle.config.js', 'drizzle.config.mjs') != ''
         run: bun x drizzle-kit migrate
 
       - name: build
@@ -75,16 +76,28 @@ jobs:
     if: github.event_name == 'pull_request'
     steps:
       - uses: actions/checkout@v4
+      - name: detect playwright
+        id: detect
+        run: |
+          if [ -f playwright.config.ts ] || [ -f playwright.config.js ] || [ -d tests/e2e ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          fi
       - uses: oven-sh/setup-bun@v2
+        if: steps.detect.outputs.present == 'true'
         with:
           bun-version: latest
       - run: bun install --frozen-lockfile
+        if: steps.detect.outputs.present == 'true'
       - run: bun x playwright install --with-deps chromium
+        if: steps.detect.outputs.present == 'true'
       - run: bun run e2e
+        if: steps.detect.outputs.present == 'true'
         env:
           CI: "true"
       - uses: actions/upload-artifact@v4
-        if: failure()
+        if: failure() && steps.detect.outputs.present == 'true'
         with:
           name: playwright-report
           path: playwright-report
