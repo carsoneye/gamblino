@@ -7,11 +7,13 @@ import {
   jsonb,
   pgEnum,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
+import type { AdapterAccountType } from "next-auth/adapters";
 
 export const gameKind = pgEnum("game_kind", ["crash", "mines", "plinko"]);
 export const roundState = pgEnum("round_state", ["open", "settled", "voided"]);
@@ -31,6 +33,7 @@ export const users = pgTable(
     name: text(),
     image: text(),
     emailVerified: timestamp({ withTimezone: true, mode: "date" }),
+    passwordHash: text(),
     balance: bigint({ mode: "bigint" }).notNull().default(sql`0`),
     createdAt: timestamp({ withTimezone: true, mode: "date" }).notNull().defaultNow(),
   },
@@ -38,6 +41,39 @@ export const users = pgTable(
     uniqueIndex("users_email_uniq").on(t.email),
     check("users_balance_nonneg", sql`${t.balance} >= 0`),
   ],
+);
+
+export const accounts = pgTable(
+  "accounts",
+  {
+    userId: uuid()
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    type: text().$type<AdapterAccountType>().notNull(),
+    provider: text().notNull(),
+    providerAccountId: text().notNull(),
+    refresh_token: text(),
+    access_token: text(),
+    expires_at: integer(),
+    token_type: text(),
+    scope: text(),
+    id_token: text(),
+    session_state: text(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.provider, t.providerAccountId] }),
+    index("accounts_user_idx").on(t.userId),
+  ],
+);
+
+export const verificationTokens = pgTable(
+  "verification_tokens",
+  {
+    identifier: text().notNull(),
+    token: text().notNull(),
+    expires: timestamp({ withTimezone: true, mode: "date" }).notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.identifier, t.token] })],
 );
 
 export const sessions = pgTable(

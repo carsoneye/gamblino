@@ -18,4 +18,5 @@ if (env.NODE_ENV !== "production") globalForDb.__pg = client;
 
 export const db = drizzle(client, { schema, casing: "snake_case" });
 export type Db = typeof db;
+export type DbTx = Parameters<Parameters<Db["transaction"]>[0]>[0];
 export { schema };
