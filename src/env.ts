@@ -2,38 +2,34 @@ import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 
 const flag = z.enum(["on", "off"]).default("on");
+const isProd = process.env.NODE_ENV === "production";
+const secret = isProd ? z.string().min(16) : z.string().min(1).default("dev-only-insecure-secret");
 
 export const env = createEnv({
   server: {
-    DATABASE_URL: z.string().url().default("postgres://gamblino:gamblino@localhost:5432/gamblino"),
-
-    AUTH_SECRET: z.string().default(""),
-    AUTH_URL: z.string().url().default("http://localhost:3000"),
-
-    EMAIL_SERVER_HOST: z.string().default("localhost"),
+    DATABASE_URL: z.string().url(),
+    AUTH_SECRET: secret,
+    AUTH_URL: z.string().url(),
+    EMAIL_SERVER_HOST: z.string().min(1).default("localhost"),
     EMAIL_SERVER_PORT: z.coerce.number().int().positive().default(1025),
-    EMAIL_SERVER_USER: z.string().default(""),
-    EMAIL_SERVER_PASSWORD: z.string().default(""),
-    EMAIL_FROM: z.string().default("noreply@gamblino.local"),
-
-    SENTRY_DSN: z.string().default(""),
+    EMAIL_SERVER_USER: z.string().optional(),
+    EMAIL_SERVER_PASSWORD: z.string().optional(),
+    EMAIL_FROM: z.string().min(1).default("noreply@gamblino.local"),
+    SENTRY_DSN: z.string().optional(),
     SENTRY_ENVIRONMENT: z.string().default("development"),
     LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace"]).default("info"),
-
     FLAG_CRASH: flag,
     FLAG_MINES: flag,
     FLAG_PLINKO: flag,
-
-    UPSTASH_REDIS_REST_URL: z.string().default(""),
-    UPSTASH_REDIS_REST_TOKEN: z.string().default(""),
-
+    UPSTASH_REDIS_REST_URL: z.string().optional(),
+    UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
     WS_PORT: z.coerce.number().int().positive().default(3001),
-
     NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   },
   client: {
-    NEXT_PUBLIC_WS_URL: z.string().default("ws://localhost:3001"),
-    NEXT_PUBLIC_APP_URL: z.string().url().default("http://localhost:3000"),
+    NEXT_PUBLIC_WS_URL: z.string().url(),
+    NEXT_PUBLIC_APP_URL: z.string().url(),
+    NEXT_PUBLIC_SENTRY_DSN: z.string().optional(),
   },
   runtimeEnv: {
     DATABASE_URL: process.env.DATABASE_URL,
@@ -56,7 +52,8 @@ export const env = createEnv({
     NODE_ENV: process.env.NODE_ENV,
     NEXT_PUBLIC_WS_URL: process.env.NEXT_PUBLIC_WS_URL,
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+    NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
   },
-  emptyStringAsUndefined: false,
+  emptyStringAsUndefined: true,
   skipValidation: process.env.SKIP_ENV_VALIDATION === "1",
 });
