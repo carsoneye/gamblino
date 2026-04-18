@@ -8,11 +8,11 @@ Single source of truth for where the project is in the 16-phase build plan. Comm
 
 ## Current
 
-- **Phase:** 2 — Design tokens
-- **Branch:** `phase/02-design-tokens`
+- **Phase:** 3 — Infra (docker + drizzle + migrations)
+- **Branch:** `phase/03-infra`
 - **Status:** not started
-- **Kickoff:** `/feature-dev phase 2 — design tokens (OKLCH via @theme inline, Clash/General Sans/Geist Mono, conic mesh + grain)`
-- **Verification:** tokens resolve in `globals.css`; no hex literals in components; fonts load; mesh+grain visible on `/`
+- **Kickoff:** `/feature-dev phase 3 — infra (docker-compose Postgres 16, Drizzle config, first migration: users/sessions/bets/rounds/transactions/seeds)`
+- **Verification:** `docker compose up -d` → `bun run db:push` green; `bun run db:studio` shows tables
 
 ## Done
 
@@ -20,12 +20,12 @@ Single source of truth for where the project is in the 16-phase build plan. Comm
 |---|---|---|---|---|
 | 0 | Pre-reqs | `main` | — (direct) | 2026-04-17 · CI skeleton green, ADRs 0001-0005 committed |
 | 1 | Boot | `phase/01-boot` | [#1](https://github.com/carsoneye/gamblino/pull/1) | 2026-04-18 · CI green (lint/typecheck/test/build + playwright); `bun run dev` serves `/`; `bun x biome check` clean |
+| 2 | Design tokens | `phase/02-design-tokens` | [#2](https://github.com/carsoneye/gamblino/pull/2) | 2026-04-18 · CI green; OKLCH tokens via `@theme inline`; Clash/General Sans/Geist Mono load; mesh+grain atmosphere; `/dev/tokens` sandbox |
 
 ## Upcoming
 
 | # | Phase | Depends on |
 |---|---|---|
-| 3 | Infra (docker + drizzle + migrations) | 1 |
 | 4 | Auth | 3 |
 | 5 | Wallet (`transact.ts`) | 4 |
 | 6 | AppShell (Sidebar/TopBar/ChatRail) | 4 |
