@@ -59,12 +59,12 @@ jobs:
       - name: typecheck
         run: bun run typecheck
 
-      - name: unit tests
-        run: bun test
-
       - name: migrate
         if: hashFiles('drizzle.config.ts', 'drizzle.config.js', 'drizzle.config.mjs') != ''
         run: bun x drizzle-kit migrate
+
+      - name: unit tests
+        run: bun test
 
       - name: build
         run: bun run build
