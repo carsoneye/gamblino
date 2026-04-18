@@ -8,11 +8,11 @@ Single source of truth for where the project is in the 16-phase build plan. Comm
 
 ## Current
 
-- **Phase:** 4 — Auth (Auth.js v5 credentials + magic-link)
-- **Branch:** `phase/04-auth`
+- **Phase:** 5 — Wallet (`transact.ts`)
+- **Branch:** `phase/05-wallet`
 - **Status:** not started
-- **Kickoff:** `/feature-dev phase 4 — auth (Auth.js v5 credentials + magic-link; sign-up grants 10,000 credits)`
-- **Verification:** Playwright: sign up → redirected to `/casino`, balance row exists
+- **Kickoff:** `/feature-dev phase 5 — wallet (atomic transact.ts; SELECT FOR UPDATE on users; append-only transactions)`
+- **Verification:** `bun test` — concurrent debits never oversell; idempotency key dedupes; append-only trigger blocks UPDATE/DELETE
 
 ## Done
 
@@ -22,12 +22,12 @@ Single source of truth for where the project is in the 16-phase build plan. Comm
 | 1 | Boot | `phase/01-boot` | [#1](https://github.com/carsoneye/gamblino/pull/1) | 2026-04-18 · CI green (lint/typecheck/test/build + playwright); `bun run dev` serves `/`; `bun x biome check` clean |
 | 2 | Design tokens | `phase/02-design-tokens` | [#2](https://github.com/carsoneye/gamblino/pull/2) | 2026-04-18 · CI green; OKLCH tokens via `@theme inline`; Clash/General Sans/Geist Mono load; mesh+grain atmosphere; `/dev/tokens` sandbox |
 | 3 | Infra | `phase/03-infra` | [#3](https://github.com/carsoneye/gamblino/pull/3) | 2026-04-18 · CI green; `docker compose up -d` → `bun run db:push` green; 6 tables; `bun run db:studio` reachable; append-only triggers block `UPDATE`/`DELETE` on `transactions` (ADR-0005) |
+| 4 | Auth | `phase/04-auth` | [#4](https://github.com/carsoneye/gamblino/pull/4) | 2026-04-18 · CI green (biome/typecheck/unit/build/e2e); Auth.js v5 credentials + magic-link; 10k signup grant atomic via `SELECT … FOR UPDATE` + idempotency key; Playwright: signup → `/casino` with `10,000` balance; anon `/casino` → `/signin`; ADR-0007 |
 
 ## Upcoming
 
 | # | Phase | Depends on |
 |---|---|---|
-| 5 | Wallet (`transact.ts`) | 4 |
 | 6 | AppShell (Sidebar/TopBar/ChatRail) | 4 |
 | 7 | Cmd+K | 6 |
 | 8 | Game primitives | 5 |
