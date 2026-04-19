@@ -1,6 +1,6 @@
-@import url("https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&f[]=general-sans@400,500,600,700&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
+/* midnight-arcade tokens: accent-2 (plum), live (cyan), win/loss */
 
 @custom-variant dark (&:is(.dark *));
 
@@ -15,8 +15,14 @@
   --color-elevated: var(--elevated);
   --color-accent: var(--accent);
   --color-accent-hi: var(--accent-hi);
+  --color-accent-2: var(--accent-2);
+  --color-accent-2-hi: var(--accent-2-hi);
+  --color-live: var(--live);
+  --color-live-hi: var(--live-hi);
   --color-win: var(--win);
   --color-loss: var(--loss);
+  --color-success: var(--live);
+  --color-danger: var(--loss);
   --color-text: var(--text);
   --color-muted: var(--muted);
   --color-border: var(--border);
@@ -57,6 +63,10 @@
   --elevated: oklch(0.19 0 0);
   --accent: oklch(0.78 0.13 82);
   --accent-hi: oklch(0.87 0.12 85);
+  --accent-2: oklch(0.72 0.17 320);
+  --accent-2-hi: oklch(0.82 0.15 325);
+  --live: oklch(0.8 0.14 195);
+  --live-hi: oklch(0.88 0.13 195);
   --win: oklch(0.78 0.13 82);
   --loss: oklch(0.58 0.2 25);
   --text: oklch(0.96 0.01 90);
@@ -88,11 +98,21 @@
     content: "";
     position: fixed;
     inset: 0;
-    background: url("/grain.svg");
-    opacity: 0.035;
+    background:
+      radial-gradient(ellipse 80% 60% at 15% 10%, oklch(0.22 0.06 82 / 0.35), transparent 55%),
+      radial-gradient(ellipse 70% 50% at 85% 85%, oklch(0.18 0.08 260 / 0.28), transparent 55%),
+      url("/grain.svg");
+    background-blend-mode: screen, screen, overlay;
+    opacity: 1;
     pointer-events: none;
     z-index: -1;
-    mix-blend-mode: overlay;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    body::before {
+      background:
+        linear-gradient(135deg, oklch(0.14 0.02 82 / 0.4), transparent 60%), url("/grain.svg");
+    }
   }
 
   h1,

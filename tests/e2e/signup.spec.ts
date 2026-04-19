@@ -11,7 +11,7 @@ test("sign up → redirected to /casino, balance row shows 10,000", async ({ pag
   await page.getByLabel("Display name (optional)").fill("Tester");
   await page.getByRole("button", { name: /create account/i }).click();
 
-  await page.waitForURL("**/casino", { timeout: 20_000 });
+  await page.waitForURL(/\/casino(\?|$)/, { timeout: 20_000 });
   await expect(page.getByTestId("balance-card")).toBeVisible();
   await expect(page.getByTestId("balance")).toHaveText("10,000");
   await expect(page.getByText(`Signed in as ${email}`)).toBeVisible();

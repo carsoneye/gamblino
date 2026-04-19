@@ -12,9 +12,9 @@ export function LiveDot({
   const sizeClass = size === "xs" ? "size-1.5" : size === "md" ? "size-2.5" : "size-2";
   const color =
     tone === "teal"
-      ? "var(--color-accent)"
+      ? "var(--color-live)"
       : tone === "magenta"
-        ? "var(--color-win)"
+        ? "var(--color-accent-2)"
         : tone === "amber"
           ? "var(--color-loss)"
           : "var(--color-muted)";

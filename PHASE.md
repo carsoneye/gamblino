@@ -9,10 +9,10 @@ Single source of truth for where the project is in the 16-phase build plan. Comm
 ## Current
 
 - **Phase:** 6 — AppShell (Sidebar/TopBar/ChatRail)
-- **Branch:** `phase/06-appshell`
-- **Status:** not started
+- **Branch:** `fix/appshell-midnight-arcade` (rename to `phase/06-appshell` before PR)
+- **Status:** in progress — structural refactor on top of initial shell commits (route groups, nav model, truth-in-affordance cards, mobile drawer, conic atmosphere, signin callbackUrl, ADR-0010)
 - **Kickoff:** `/feature-dev phase 6 — appshell (Sidebar + TopBar + ChatRail stub; landing page; asymmetric 7/5 hero)`
-- **Verification:** `/` + `/casino` render; Lighthouse a11y ≥ 95
+- **Verification:** `/` + `/casino` render; Lighthouse a11y ≥ 95; mobile drawer opens; coming-soon cards are not clickable
 
 ## Done
 

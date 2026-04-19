@@ -77,5 +77,5 @@ export async function signupAction(
     return { error: "Account created, but sign-in failed. Try signing in." };
   }
 
-  redirect("/casino");
+  redirect("/casino?welcome=1");
 }

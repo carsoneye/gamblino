@@ -3,13 +3,14 @@
 import { useActionState } from "react";
 import { signinCredentialsAction, signinMagicAction } from "./actions";
 
-export function SigninForms() {
+export function SigninForms({ callbackUrl }: { callbackUrl?: string }) {
   const [credsState, credsAction, credsPending] = useActionState(signinCredentialsAction, {});
   const [magicState, magicAction, magicPending] = useActionState(signinMagicAction, {});
 
   return (
     <div className="space-y-8">
       <form action={credsAction} className="space-y-4" noValidate>
+        {callbackUrl ? <input type="hidden" name="callbackUrl" value={callbackUrl} /> : null}
         <label className="block space-y-1.5">
           <span className="text-sm text-[var(--color-muted)]">Email</span>
           <input
@@ -56,6 +57,7 @@ export function SigninForms() {
       </div>
 
       <form action={magicAction} className="space-y-4" noValidate>
+        {callbackUrl ? <input type="hidden" name="callbackUrl" value={callbackUrl} /> : null}
         <label className="block space-y-1.5">
           <span className="text-sm text-[var(--color-muted)]">Magic-link email</span>
           <input
@@ -70,9 +72,6 @@ export function SigninForms() {
           <p role="alert" className="text-sm text-[var(--color-loss)]">
             {magicState.error}
           </p>
-        )}
-        {magicState?.info && (
-          <p className="text-sm text-[var(--color-accent-hi)]">{magicState.info}</p>
         )}
         <button
           type="submit"
