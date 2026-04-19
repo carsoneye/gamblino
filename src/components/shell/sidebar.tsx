@@ -1,96 +1,125 @@
 import Link from "next/link";
 import { GameNavItem } from "@/components/shell/game-nav-item";
 import { NavLink } from "@/components/shell/nav-link";
-import { games, primaryNav } from "@/lib/nav";
+import { resolveGames, userMeta } from "@/lib/nav";
+import { cn } from "@/lib/utils";
 
-export function Sidebar() {
-  const enabledGames = games.filter((g) => g.enabled);
+export function Sidebar({ variant = "static" }: { variant?: "static" | "drawer" }) {
+  const games = resolveGames();
+  const isDrawer = variant === "drawer";
+  const compact = !isDrawer;
+
   return (
     <aside
       aria-label="Primary"
-      className="row-span-2 hidden flex-col border-r border-[var(--color-border)] bg-[var(--color-bg-deep)]/60 backdrop-blur md:flex md:w-16 lg:w-64"
+      className={cn(
+        "flex-col border-r border-[var(--color-border)] bg-[var(--color-bg-deep)]",
+        isDrawer ? "flex h-full w-full" : "row-span-2 hidden md:flex md:w-16 lg:w-60",
+      )}
     >
-      <div className="flex h-14 items-center border-b border-[var(--color-border)] px-4 lg:px-5">
+      <div
+        className={cn(
+          "flex h-16 items-center border-b border-[var(--color-border)]/60",
+          isDrawer ? "px-5" : "px-3 lg:px-5",
+        )}
+      >
         <Link
           href="/casino"
-          className="font-display text-xl font-semibold tracking-tight focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]"
+          className="inline-flex items-baseline rounded-[var(--radius-sm)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]"
         >
-          <span className="hidden lg:inline">gamblino</span>
-          <span aria-hidden className="lg:hidden">
-            g.
+          <span
+            className={cn(
+              "font-display text-lg font-semibold tracking-[-0.04em] text-[var(--color-text)]",
+              isDrawer ? "" : "hidden lg:inline",
+            )}
+          >
+            gamblino
           </span>
-          <span className="sr-only lg:hidden">gamblino</span>
+          <span
+            aria-hidden
+            className={cn(
+              "font-display text-lg font-semibold text-[var(--color-accent)]",
+              isDrawer ? "" : "hidden lg:inline",
+            )}
+          >
+            .
+          </span>
+          {!isDrawer ? (
+            <>
+              <span
+                aria-hidden
+                className="font-display text-xl font-semibold text-[var(--color-accent)] lg:hidden"
+              >
+                g.
+              </span>
+              <span className="sr-only lg:hidden">gamblino</span>
+            </>
+          ) : null}
         </Link>
       </div>
 
       <nav
         aria-label="Main"
-        className="flex flex-1 flex-col gap-6 overflow-y-auto px-2 py-4 lg:px-3"
+        className={cn(
+          "flex flex-1 flex-col gap-5 overflow-y-auto py-2",
+          isDrawer ? "px-3" : "px-2 lg:px-3",
+        )}
       >
-        <ul className="space-y-1">
-          {primaryNav.map((item) => {
-            const Icon = item.icon;
-            return (
-              <li key={item.href}>
-                <div className="lg:hidden">
-                  <NavLink
-                    compact
-                    href={item.href}
-                    label={item.label}
-                    icon={<Icon aria-hidden className="size-4 shrink-0" />}
-                  />
-                </div>
-                <div className="hidden lg:block">
+        <div className="flex flex-col gap-1">
+          <SectionLabel hideWhenCompact={compact}>Lobby</SectionLabel>
+          <ul className="space-y-0.5">
+            {userMeta.map((item) => {
+              const Icon = item.icon;
+              return (
+                <li key={item.href}>
                   <NavLink
                     href={item.href}
                     label={item.label}
-                    icon={<Icon aria-hidden className="size-4 shrink-0" />}
+                    enabled={item.enabled}
+                    compact={compact}
+                    icon={<Icon className="size-4" aria-hidden />}
+                    showLabel={isDrawer ? true : undefined}
                   />
-                </div>
-              </li>
-            );
-          })}
-        </ul>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
 
-        <div className="space-y-2">
-          <p className="hidden px-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)] lg:block">
-            Games
-          </p>
-          <ul className="space-y-1">
-            {enabledGames.map((game) => {
+        <div className="flex flex-col gap-1">
+          <SectionLabel hideWhenCompact={compact}>Originals</SectionLabel>
+          <ul className="space-y-0.5">
+            {games.map((game) => {
               const Icon = game.icon;
               return (
                 <li key={game.slug}>
-                  <div className="lg:hidden">
-                    <GameNavItem
-                      compact
-                      label={game.label}
-                      icon={<Icon aria-hidden className="size-4 shrink-0" />}
-                      status={game.status}
-                    />
-                  </div>
-                  <div className="hidden lg:block">
-                    <GameNavItem
-                      label={game.label}
-                      icon={<Icon aria-hidden className="size-4 shrink-0" />}
-                      status={game.status}
-                    />
-                  </div>
+                  <GameNavItem
+                    label={game.label}
+                    href={game.enabled ? game.href : undefined}
+                    status={game.status}
+                    compact={compact && !isDrawer}
+                    icon={<Icon className="size-4" aria-hidden />}
+                  />
                 </li>
               );
             })}
           </ul>
         </div>
       </nav>
-
-      <div className="hidden border-t border-[var(--color-border)] p-4 lg:block">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
-          Play-money only
-        </p>
-        <p className="mt-1 text-xs text-[var(--color-muted)]">
-          No real money. No crypto. Credits are for fun.
-        </p>
-      </div>
     </aside>
+  );
+}
+
+function SectionLabel({
+  children,
+  hideWhenCompact,
+}: {
+  children: React.ReactNode;
+  hideWhenCompact: boolean;
+}) {
+  return (
+    <div className={cn("px-3 pb-1", hideWhenCompact && "hidden lg:block")}>
+      <span className="text-[11px] font-medium text-[var(--color-muted)]">{children}</span>
+    </div>
   );
 }

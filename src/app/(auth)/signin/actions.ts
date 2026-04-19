@@ -11,6 +11,7 @@ const credsSchema = z.object({
     .email()
     .transform((v) => v.trim().toLowerCase()),
   password: z.string().min(1).max(128),
+  callbackUrl: z.string().optional(),
 });
 
 const magicSchema = z.object({
@@ -18,9 +19,16 @@ const magicSchema = z.object({
     .string()
     .email()
     .transform((v) => v.trim().toLowerCase()),
+  callbackUrl: z.string().optional(),
 });
 
-export type SigninState = { error?: string; info?: string };
+export type SigninState = { error?: string };
+
+function safeCallback(raw: string | undefined): string {
+  if (!raw) return "/casino";
+  if (!raw.startsWith("/") || raw.startsWith("//")) return "/casino";
+  return raw;
+}
 
 export async function signinCredentialsAction(
   _prev: SigninState | undefined,
@@ -29,29 +37,42 @@ export async function signinCredentialsAction(
   const parsed = credsSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
+    callbackUrl: formData.get("callbackUrl") || undefined,
   });
   if (!parsed.success) return { error: "Enter a valid email and password" };
 
   try {
-    await signIn("credentials", { ...parsed.data, redirect: false });
+    await signIn("credentials", {
+      email: parsed.data.email,
+      password: parsed.data.password,
+      redirect: false,
+    });
   } catch (err) {
     if (err instanceof AuthError) return { error: "Invalid email or password" };
     throw err;
   }
-  redirect("/casino");
+  redirect(safeCallback(parsed.data.callbackUrl));
 }
 
 export async function signinMagicAction(
   _prev: SigninState | undefined,
   formData: FormData,
 ): Promise<SigninState> {
-  const parsed = magicSchema.safeParse({ email: formData.get("email") });
+  const parsed = magicSchema.safeParse({
+    email: formData.get("email"),
+    callbackUrl: formData.get("callbackUrl") || undefined,
+  });
   if (!parsed.success) return { error: "Enter a valid email" };
+
   try {
     await signIn("nodemailer", { email: parsed.data.email, redirect: false });
   } catch (err) {
     if (err instanceof AuthError) return { error: "Could not send magic link" };
     throw err;
   }
-  return { info: "Check your email for a sign-in link." };
+
+  const qs = new URLSearchParams({ email: parsed.data.email });
+  const cb = safeCallback(parsed.data.callbackUrl);
+  if (cb !== "/casino") qs.set("callbackUrl", cb);
+  redirect(`/signin/check-email?${qs.toString()}`);
 }

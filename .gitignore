@@ -33,6 +33,14 @@ Thumbs.db
 .idea
 *.swp
 
+# agent / AI tool caches (user-local, not tracked)
+.agents
+.factory
+.trae
+.windsurf
+.claude/skills
+skills-lock.json
+
 # logs
 *.log
 npm-debug.log*
