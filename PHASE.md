@@ -8,11 +8,11 @@ Single source of truth for where the project is in the 16-phase build plan. Comm
 
 ## Current
 
-- **Phase:** 6 — AppShell (Sidebar/TopBar/ChatRail)
-- **Branch:** `fix/appshell-midnight-arcade` (rename to `phase/06-appshell` before PR)
-- **Status:** in progress — structural refactor on top of initial shell commits (route groups, nav model, truth-in-affordance cards, mobile drawer, conic atmosphere, signin callbackUrl, ADR-0010)
-- **Kickoff:** `/feature-dev phase 6 — appshell (Sidebar + TopBar + ChatRail stub; landing page; asymmetric 7/5 hero)`
-- **Verification:** `/` + `/casino` render; Lighthouse a11y ≥ 95; mobile drawer opens; coming-soon cards are not clickable
+- **Phase:** 7 — Cmd+K (command palette)
+- **Branch:** `phase/07-cmdk`
+- **Status:** not started
+- **Kickoff:** `/feature-dev phase 7 — cmd+k (cmdk fuzzy search over games + nav + quick actions)`
+- **Verification:** `⌘K` opens overlay; `mines<Enter>` navigates to `/casino/mines`; game-flag-off entries appear with disabled styling; mobile hamburger still works; Playwright e2e for open/close/select
 
 ## Done
 
@@ -24,12 +24,12 @@ Single source of truth for where the project is in the 16-phase build plan. Comm
 | 3 | Infra | `phase/03-infra` | [#3](https://github.com/carsoneye/gamblino/pull/3) | 2026-04-18 · CI green; `docker compose up -d` → `bun run db:push` green; 6 tables; `bun run db:studio` reachable; append-only triggers block `UPDATE`/`DELETE` on `transactions` (ADR-0005) |
 | 4 | Auth | `phase/04-auth` | [#4](https://github.com/carsoneye/gamblino/pull/4) | 2026-04-18 · CI green (biome/typecheck/unit/build/e2e); Auth.js v5 credentials + magic-link; 10k signup grant atomic via `SELECT … FOR UPDATE` + idempotency key; Playwright: signup → `/casino` with `10,000` balance; anon `/casino` → `/signin`; ADR-0007 |
 | 5 | Wallet | `phase/05-wallet` | [#5](https://github.com/carsoneye/gamblino/pull/5) | 2026-04-18 · CI green (biome/typecheck/unit/build/e2e); `transact.ts` + `transactWithin` with `SELECT … FOR UPDATE`; 13 DB-backed wallet tests green (concurrent debit, overdraft, idempotency dedupe, append-only trigger blocks UPDATE/DELETE, composition rollback); `grantSignupBonus` refactored onto `transactWithin`; ADR-0008 |
+| 6 | AppShell | `phase/06-appshell` | [#6](https://github.com/carsoneye/gamblino/pull/6) + [#8](https://github.com/carsoneye/gamblino/pull/8) | 2026-04-19 · CI green (biome/typecheck/unit/build/e2e); route groups `(app)`/`(auth)`/`(marketing)`; AppShell (Sidebar + TopBar + ChatRail) with mobile drawer; marketing shell with landing hero, how-it-works, FAQ, footer; truth-in-affordance game cards (locked → `/signup`, flag-off → aria-disabled); conic+grain atmosphere; grant celebration modal on `?welcome=1`; `UserMenu` replaces inline email; `/dev/tokens` rebuilt as design playground; ADR-0010 (route groups / shell separation); Playwright: landing marketing shell, anon `/casino` → `/signin`, authed shell renders, mobile hamburger opens drawer, magic-link → check-email |
 
 ## Upcoming
 
 | # | Phase | Depends on |
 |---|---|---|
-| 7 | Cmd+K | 6 |
 | 8 | Game primitives | 5 |
 | 9 | Provably-fair | 8 |
 | 10 | Mines | 9 |
