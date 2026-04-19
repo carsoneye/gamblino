@@ -26,20 +26,16 @@ test("anonymous /casino redirects to /signin with callbackUrl", async ({ page })
   expect(page.url()).toMatch(/\/signin/);
 });
 
-test("coming-soon game cards are non-interactive", async ({ page }) => {
+test("landing game cards route guests to signup (never dangle)", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
 
-  const card = page
-    .locator("ul")
-    .filter({ has: page.getByRole("heading", { level: 3, name: /crash/i }) })
-    .getByRole("listitem")
-    .first();
-
-  const disabled = card.locator('[aria-disabled="true"]');
-  const linkCount = await card.locator("a[href]").count();
-  const hasDisabled = await disabled.count();
-  expect(hasDisabled + linkCount).toBeGreaterThan(0);
+  const cards = page.locator("#originals").getByRole("listitem");
+  const count = await cards.count();
+  expect(count).toBeGreaterThan(0);
+  for (let i = 0; i < count; i++) {
+    await expect(cards.nth(i).locator("a[href]").first()).toHaveAttribute("href", "/signup");
+  }
 });
 
 test("signup → /casino authed shell renders sidebar, top bar, chat rail, lobby grid", async ({
@@ -63,7 +59,7 @@ test("signup → /casino authed shell renders sidebar, top bar, chat rail, lobby
 
   await expect(page.getByTestId("balance-card")).toBeVisible();
   await expect(page.getByTestId("balance")).toHaveText("10,000");
-  await expect(page.getByText(`Signed in as ${email}`)).toBeVisible();
+  await expect(page.getByRole("button", { name: "Account menu" })).toBeVisible();
 
   await expect(page.getByRole("heading", { level: 2, name: /originals/i })).toBeVisible();
   await expect(page.getByRole("heading", { level: 2, name: /how it works/i })).toHaveCount(0);
@@ -78,7 +74,7 @@ test("mobile viewport: hamburger opens sidebar drawer, nav closes it", async ({ 
   await page.waitForURL("**/casino**", { timeout: 20_000 });
 
   await page.setViewportSize({ width: 375, height: 812 });
-  await page.reload();
+  await page.goto("/casino");
 
   await expect(page.getByRole("complementary", { name: "Primary" })).toHaveCount(0);
   const hamburger = page.getByRole("button", { name: /open menu/i });
