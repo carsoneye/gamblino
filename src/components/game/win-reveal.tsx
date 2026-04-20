@@ -1,4 +1,4 @@
-import { formatCredits } from "@/lib/money";
+import { formatAmount } from "@/lib/wallet/currencies";
 
 export type WinOutcome = "win" | "loss" | "cashed-out";
 
@@ -25,7 +25,7 @@ export function WinReveal({ outcome, delta, multiplier }: Props) {
         ? "var(--color-live)"
         : "var(--color-loss)";
   const sign = delta === undefined ? "" : positive ? "+" : "−";
-  const amount = delta === undefined ? null : formatCredits(delta < 0n ? -delta : delta);
+  const amount = delta === undefined ? null : formatAmount(delta < 0n ? -delta : delta, "credit");
 
   return (
     <div

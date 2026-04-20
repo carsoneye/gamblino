@@ -3,7 +3,7 @@ import { GameShell } from "@/components/game/game-shell";
 import { ProvablyFairBadge } from "@/components/game/provably-fair-badge";
 import { WinReveal } from "@/components/game/win-reveal";
 import { FIXTURES } from "@/lib/games/provably-fair.fixtures";
-import { MICRO_PER_CREDIT } from "@/lib/money";
+import { CURRENCY_UNITS } from "@/lib/wallet/currencies";
 import { BetControlsDemo } from "./bet-controls-demo";
 
 const FIXTURE = FIXTURES[0];
@@ -89,15 +89,19 @@ export default function PrimitivesPage() {
         <div className="space-y-4">
           <div className="space-y-2">
             <StateLabel>outcome · win</StateLabel>
-            <WinReveal outcome="win" delta={2_500n * MICRO_PER_CREDIT} multiplier={2.5} />
+            <WinReveal outcome="win" delta={2_500n * CURRENCY_UNITS.credit} multiplier={2.5} />
           </div>
           <div className="space-y-2">
             <StateLabel>outcome · cashed-out</StateLabel>
-            <WinReveal outcome="cashed-out" delta={1_200n * MICRO_PER_CREDIT} multiplier={1.2} />
+            <WinReveal
+              outcome="cashed-out"
+              delta={1_200n * CURRENCY_UNITS.credit}
+              multiplier={1.2}
+            />
           </div>
           <div className="space-y-2">
             <StateLabel>outcome · loss</StateLabel>
-            <WinReveal outcome="loss" delta={500n * MICRO_PER_CREDIT} />
+            <WinReveal outcome="loss" delta={500n * CURRENCY_UNITS.credit} />
           </div>
           <div className="space-y-2">
             <StateLabel>outcome · null (renders nothing)</StateLabel>

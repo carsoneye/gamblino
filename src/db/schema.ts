@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import {
   bigint,
+  boolean,
   check,
   index,
   integer,
@@ -20,9 +21,39 @@ export const roundState = pgEnum("round_state", ["open", "settled", "voided"]);
 export const betStatus = pgEnum("bet_status", ["open", "won", "lost", "cashed_out", "voided"]);
 export const txReason = pgEnum("tx_reason", [
   "signup_bonus",
+  "daily_grant",
   "bet_stake",
   "bet_payout",
   "adjustment",
+]);
+export const currencyKind = pgEnum("currency_kind", [
+  "credit",
+  "usd",
+  "usdt",
+  "usdc",
+  "btc",
+  "eth",
+]);
+export const walletLimitKind = pgEnum("wallet_limit_kind", [
+  "deposit",
+  "loss",
+  "session_length_min",
+]);
+export const accountEventKind = pgEnum("account_event_kind", [
+  "signup",
+  "login",
+  "logout",
+  "daily_grant_claimed",
+  "limit_set",
+  "limit_effective",
+  "bet_placed",
+  "bet_settled",
+]);
+export const geoEventSource = pgEnum("geo_event_source", [
+  "signup_credentials",
+  "signup_magic_link_first_load",
+  "login",
+  "ws_connect",
 ]);
 
 export const users = pgTable(
@@ -146,6 +177,23 @@ export const bets = pgTable(
   ],
 );
 
+export const wallets = pgTable(
+  "wallets",
+  {
+    userId: uuid()
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    currencyKind: currencyKind().notNull(),
+    balance: bigint({ mode: "bigint" }).notNull().default(sql`0`),
+    createdAt: timestamp({ withTimezone: true, mode: "date" }).notNull().defaultNow(),
+    updatedAt: timestamp({ withTimezone: true, mode: "date" }).notNull().defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.userId, t.currencyKind] }),
+    check("wallets_balance_nonneg", sql`${t.balance} >= 0`),
+  ],
+);
+
 export const transactions = pgTable(
   "transactions",
   {
@@ -153,6 +201,7 @@ export const transactions = pgTable(
     userId: uuid()
       .notNull()
       .references(() => users.id, { onDelete: "restrict" }),
+    currencyKind: currencyKind().notNull().default("credit"),
     delta: bigint({ mode: "bigint" }).notNull(),
     balanceAfter: bigint({ mode: "bigint" }).notNull(),
     reason: txReason().notNull(),
@@ -165,5 +214,67 @@ export const transactions = pgTable(
     index("tx_user_created_idx").on(t.userId, t.createdAt),
     uniqueIndex("tx_user_idem_uniq").on(t.userId, t.idempotencyKey),
     check("tx_balance_nonneg", sql`${t.balanceAfter} >= 0`),
+    check(
+      "tx_idem_prefix",
+      sql`${t.idempotencyKey} IS NULL OR ${t.idempotencyKey} ~ '^(srv_|cli_)'`,
+    ),
   ],
+);
+
+export const walletLimits = pgTable(
+  "wallet_limits",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    userId: uuid()
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    currencyKind: currencyKind().notNull(),
+    kind: walletLimitKind().notNull(),
+    amount: bigint({ mode: "bigint" }).notNull(),
+    setAt: timestamp({ withTimezone: true, mode: "date" }).notNull().defaultNow(),
+    effectiveAt: timestamp({ withTimezone: true, mode: "date" }).notNull(),
+    createdAt: timestamp({ withTimezone: true, mode: "date" }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("wallet_limits_lookup_idx").on(t.userId, t.currencyKind, t.kind, t.effectiveAt),
+    check("wallet_limits_amount_nonneg", sql`${t.amount} >= 0`),
+  ],
+);
+
+export const accountEvents = pgTable(
+  "account_events",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    userId: uuid()
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    kind: accountEventKind().notNull(),
+    payload: jsonb(),
+    createdAt: timestamp({ withTimezone: true, mode: "date" }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("account_events_user_created_idx").on(t.userId, t.createdAt),
+    index("account_events_kind_idx").on(t.kind, t.createdAt),
+  ],
+);
+
+export const userGeoEvents = pgTable(
+  "user_geo_events",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    userId: uuid()
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    ip: text().notNull(),
+    userAgent: text(),
+    country: text(),
+    region: text(),
+    city: text(),
+    asn: integer(),
+    asnOrg: text(),
+    vpn: boolean().notNull().default(false),
+    source: geoEventSource().notNull(),
+    createdAt: timestamp({ withTimezone: true, mode: "date" }).notNull().defaultNow(),
+  },
+  (t) => [index("user_geo_events_user_created_idx").on(t.userId, t.createdAt)],
 );

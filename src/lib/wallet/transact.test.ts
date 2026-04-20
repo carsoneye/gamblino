@@ -3,10 +3,10 @@ import { randomUUID } from "node:crypto";
 import { and, eq, sql } from "drizzle-orm";
 import { client, db } from "@/db";
 import { transactions, users } from "@/db/schema";
-import { MICRO_PER_CREDIT } from "@/lib/money";
+import { CURRENCY_UNITS } from "./currencies";
 import { InsufficientBalanceError, transact, transactWithin, UserNotFoundError } from "./transact";
 
-const c = (n: bigint) => n * MICRO_PER_CREDIT;
+const c = (n: bigint) => n * CURRENCY_UNITS.credit;
 
 async function seedUser(balance = 0n): Promise<string> {
   const email = `wallet+${Date.now()}-${randomUUID()}@gamblino.test`;
@@ -107,7 +107,7 @@ describe("transact — user lookup", () => {
 describe("transact — idempotency", () => {
   it("returns the first result on duplicate key without double-mutating", async () => {
     const userId = await seedUser(0n);
-    const key = `test-idem-${randomUUID()}`;
+    const key = `cli_test_${randomUUID()}`;
 
     const first = await transact({
       userId,

@@ -2,12 +2,12 @@
 
 import { useState } from "react";
 import { BetControls, type BetPhase } from "@/components/game/bet-controls";
-import { MICRO_PER_CREDIT } from "@/lib/money";
+import { CURRENCY_UNITS } from "@/lib/wallet/currencies";
 
-const BALANCE = 10_000n * MICRO_PER_CREDIT;
+const BALANCE = 10_000n * CURRENCY_UNITS.credit;
 
 export function BetControlsDemo({ phase }: { phase: BetPhase }) {
-  const [stake, setStake] = useState<bigint>(25n * MICRO_PER_CREDIT);
+  const [stake, setStake] = useState<bigint>(25n * CURRENCY_UNITS.credit);
 
   return (
     <BetControls

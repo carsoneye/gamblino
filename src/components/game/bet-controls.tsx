@@ -2,8 +2,8 @@
 
 import { type ChangeEvent, type FormEvent, useId } from "react";
 import { Button } from "@/components/ui/button";
-import { formatCredits, MICRO_PER_CREDIT } from "@/lib/money";
 import { cn } from "@/lib/utils";
+import { CURRENCY_UNITS, formatAmount } from "@/lib/wallet/currencies";
 
 export type BetPhase = "idle" | "open" | "settling";
 
@@ -35,7 +35,7 @@ export function BetControls({
   onPlaceBet,
   onCashOut,
   phase = "idle",
-  minStake = MICRO_PER_CREDIT,
+  minStake = CURRENCY_UNITS.credit,
   disabled = false,
   placeBetLabel = "Place bet",
   cashOutLabel = "Cash out",
@@ -46,12 +46,12 @@ export function BetControls({
   const max = balance > ZERO ? balance : ZERO;
   const locked = disabled || settling;
 
-  const displayCredits = Number(stake / MICRO_PER_CREDIT);
+  const displayCredits = Number(stake / CURRENCY_UNITS.credit);
 
   function handleInput(e: ChangeEvent<HTMLInputElement>) {
     const digits = e.target.value.replace(/\D/g, "");
     const credits = digits === "" ? ZERO : BigInt(digits);
-    onStakeChange(clamp(credits * MICRO_PER_CREDIT, ZERO, max));
+    onStakeChange(clamp(credits * CURRENCY_UNITS.credit, ZERO, max));
   }
 
   function handleSubmit(e: FormEvent) {
@@ -117,7 +117,7 @@ export function BetControls({
         </div>
       </Field>
 
-      <Meta label="Balance" value={`${formatCredits(balance)} credits`} />
+      <Meta label="Balance" value={`${formatAmount(balance, "credit")} credits`} />
 
       <Button
         type="submit"

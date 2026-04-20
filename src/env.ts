@@ -2,8 +2,10 @@ import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 
 const flag = z.enum(["on", "off"]).default("on");
+const flagOff = z.enum(["on", "off"]).default("off");
 const isProd = process.env.NODE_ENV === "production";
 const secret = isProd ? z.string().min(16) : z.string().min(1).default("dev-only-insecure-secret");
+const maxmindPath = isProd ? z.string().min(1) : z.string().min(1).optional();
 
 export const env = createEnv({
   server: {
@@ -22,13 +24,20 @@ export const env = createEnv({
     FLAG_MINES: flag,
     FLAG_PLINKO: flag,
     FLAG_LOTTERY: flag,
+    FLAG_CURRENCY_CREDIT: flag,
+    FLAG_CURRENCY_USD: flagOff,
+    FLAG_CURRENCY_USDT: flagOff,
+    FLAG_CURRENCY_USDC: flagOff,
+    FLAG_CURRENCY_BTC: flagOff,
+    FLAG_CURRENCY_ETH: flagOff,
+    MAXMIND_DB_PATH: maxmindPath,
     UPSTASH_REDIS_REST_URL: z.string().optional(),
     UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
     WS_PORT: z.coerce.number().int().positive().default(3001),
     NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   },
   client: {
-    NEXT_PUBLIC_WS_URL: z.string().url(),
+    NEXT_PUBLIC_WS_URL: z.string().url().default("ws://localhost:3001"),
     NEXT_PUBLIC_APP_URL: z.string().url(),
     NEXT_PUBLIC_SENTRY_DSN: z.string().optional(),
   },
@@ -48,6 +57,13 @@ export const env = createEnv({
     FLAG_MINES: process.env.FLAG_MINES,
     FLAG_PLINKO: process.env.FLAG_PLINKO,
     FLAG_LOTTERY: process.env.FLAG_LOTTERY,
+    FLAG_CURRENCY_CREDIT: process.env.FLAG_CURRENCY_CREDIT,
+    FLAG_CURRENCY_USD: process.env.FLAG_CURRENCY_USD,
+    FLAG_CURRENCY_USDT: process.env.FLAG_CURRENCY_USDT,
+    FLAG_CURRENCY_USDC: process.env.FLAG_CURRENCY_USDC,
+    FLAG_CURRENCY_BTC: process.env.FLAG_CURRENCY_BTC,
+    FLAG_CURRENCY_ETH: process.env.FLAG_CURRENCY_ETH,
+    MAXMIND_DB_PATH: process.env.MAXMIND_DB_PATH,
     UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
     UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
     WS_PORT: process.env.WS_PORT,

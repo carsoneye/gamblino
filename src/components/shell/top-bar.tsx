@@ -3,7 +3,7 @@ import { signOut } from "@/auth";
 import { Sidebar } from "@/components/shell/sidebar";
 import { SidebarDrawer } from "@/components/shell/sidebar-drawer";
 import { UserMenu } from "@/components/shell/user-menu";
-import { formatCredits } from "@/lib/money";
+import { formatAmount } from "@/lib/wallet/currencies";
 
 type User = { balance: bigint; email: string; name: string | null };
 
@@ -39,7 +39,7 @@ function Authed({ user }: { user: User }) {
           data-testid="balance"
           className="numeric text-xl font-semibold tracking-tight text-[var(--color-text)]"
         >
-          {formatCredits(balance)}
+          {formatAmount(balance, "credit")}
         </span>
       </div>
 
