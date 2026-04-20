@@ -8,11 +8,11 @@ Single source of truth for where the project is in the 16-phase build plan. Comm
 
 ## Current
 
-- **Phase:** 7 — Cmd+K (command palette)
-- **Branch:** `phase/07-cmdk`
+- **Phase:** 7 — Game Foundations (provably-fair + primitives + dynamic route)
+- **Branch:** `phase/07-game-foundations`
 - **Status:** not started
-- **Kickoff:** `/feature-dev phase 7 — cmd+k (cmdk fuzzy search over games + nav + quick actions)`
-- **Verification:** `⌘K` opens overlay; `mines<Enter>` navigates to `/casino/mines`; game-flag-off entries appear with disabled styling; mobile hamburger still works; Playwright e2e for open/close/select
+- **Kickoff:** `/feature-dev phase 7 — game foundations (provably-fair HMAC module, game primitives BetControls/WinReveal/ProvablyFairBadge/GameShell, dynamic /casino/[game] route, getSessionUser helper, lottery enum migration, /dev/primitives sandbox, ADR-0011)`
+- **Verification:** provably-fair determinism test (10k runs, same seed → same output); `/dev/primitives` renders each primitive; all 4 game routes respond 200 (placeholder); `FLAG_MINES=off` → `/casino/mines` 404; CI green
 
 ## Done
 
@@ -30,14 +30,15 @@ Single source of truth for where the project is in the 16-phase build plan. Comm
 
 | # | Phase | Depends on |
 |---|---|---|
-| 8 | Game primitives | 5 |
-| 9 | Provably-fair | 8 |
-| 10 | Mines | 9 |
-| 11 | Plinko | 10 |
-| 12 | WS server | 11 |
-| 13 | Crash | 12 |
-| 14 | Meta pages (profile/leaderboard/tx list) | 13 |
-| 15 | Polish + regression | 14 |
+| 8 | Mines | 7 |
+| 9 | Plinko (+ PixiJS) | 7, 8 |
+| 10 | Lottery (instant scratch) | 7 |
+| 11 | Crash (+ WS server, viewport-invert moment) | 7, 8 |
+| 12 | Cmd+K (command palette) | 11 |
+| 13 | Meta pages (profile/leaderboard/tx list) | 11 |
+| 14 | Polish + regression | 13 |
+
+**Plan:** `~/.claude/plans/dapper-puzzling-waterfall.md` (four-games arc) supersedes the old Phase 7–15 ordering in `greedy-honking-fairy.md`.
 
 ---
 
