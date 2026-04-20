@@ -26,6 +26,29 @@ bun run e2e                 # Playwright
 bun x biome check           # lint + format
 ```
 
+## Geo setup (MaxMind GeoLite2)
+
+`src/lib/geo/capture.ts` reads two MaxMind `.mmdb` files from a directory pointed
+to by `MAXMIND_DB_PATH`: `GeoLite2-City.mmdb` (country/region/city) and
+`GeoLite2-ASN.mmdb` (ASN → datacenter/VPN inference). The files are not checked
+in — they are large and licensed by MaxMind.
+
+**Local dev:** create a free MaxMind account at
+<https://www.maxmind.com/en/geolite2/signup>, download the GeoLite2 City and
+ASN databases, extract the `.mmdb` files into a local directory (e.g.
+`~/maxmind/`), and point `MAXMIND_DB_PATH` at it. If `MAXMIND_DB_PATH` is unset
+in development, `getEnvGeoReader()` returns `null` and geo capture is skipped.
+
+**Tests / CI:** a small, committed fixture pair under `tests/fixtures/maxmind/`
+(`GeoLite2-City-Test.mmdb` + `GeoLite2-ASN-Test.mmdb`, sourced from MaxMind's
+public test-data repo) is used by `src/lib/geo/capture.test.ts` via explicit
+paths — no env var required. Tests don't silently skip; the fixture path is
+load-bearing.
+
+**Prod:** the `.mmdb` files are baked into the container image (or fetched by
+`geoipupdate` at deploy time) and `MAXMIND_DB_PATH` is required in production —
+`src/env.ts` rejects boot if it is unset.
+
 ## Structure
 
 ```
