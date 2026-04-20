@@ -4,7 +4,7 @@
 
 ## Context
 
-Every original (Crash, Mines, Plinko) needs a verifiable RNG so a player can, after the round, reproduce the outcome and confirm the house did not re-roll. The standard in crypto-casino space is HMAC-SHA256 seeded by a server seed (committed as a hash before the round), a client seed (user-editable), and a monotonically increasing nonce per round. This is the scheme published by Stake and adopted by Rainbet, Roobet, and others. We are play-money but we treat the invariant as if it were money.
+Every original (Crash, Mines, Plinko, Lottery) needs a verifiable RNG so a player can, after the round, reproduce the outcome and confirm the house did not re-roll. The common pattern for this is HMAC-SHA256 (RFC 2104) seeded by a server seed (committed as a hash before the round), a client seed (user-editable), and a monotonically increasing nonce per round. We are play-money but we treat the invariant as if it were money.
 
 ## Decision
 
