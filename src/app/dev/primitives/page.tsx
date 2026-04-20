@@ -111,7 +111,7 @@ export default function PrimitivesPage() {
       <Section
         eyebrow="Components · 08"
         title="ProvablyFairBadge"
-        description="Commit/reveal receipt. Truncated hash on the card; full seeds + verify formula in the dialog."
+        description="Trust chip in the side rail. Click to open the commit/reveal dialog with full seeds + verify formula."
       >
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <div className="space-y-3">

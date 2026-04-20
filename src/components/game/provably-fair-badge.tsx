@@ -14,38 +14,13 @@ type Props = {
   revealed?: RevealedSeeds | null;
 };
 
-function truncate(hash: string): string {
-  if (hash.length <= 14) return hash;
-  return `${hash.slice(0, 8)}…${hash.slice(-4)}`;
-}
-
 export function ProvablyFairBadge({ serverSeedHash, revealed = null }: Props) {
-  const status = revealed ? "Revealed" : "Committed";
-
   return (
     <Dialog.Root>
-      <div className="space-y-2 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
-        <div className="flex items-center justify-between">
-          <span className="flex items-center gap-1.5 text-[11px] font-medium tracking-[0.22em] text-[var(--color-muted)] uppercase">
-            <ShieldCheck className="size-3.5" aria-hidden />
-            Provably fair
-          </span>
-          <span
-            className="text-[10px] font-medium tracking-[0.18em] uppercase"
-            style={{
-              color: revealed ? "var(--color-live)" : "var(--color-muted)",
-            }}
-          >
-            {status}
-          </span>
-        </div>
-        <div className="numeric truncate text-[11px] text-[var(--color-text)]">
-          {truncate(serverSeedHash)}
-        </div>
-        <Dialog.Trigger className="text-[12px] text-[var(--color-muted)] transition-colors duration-[var(--duration-fast)] hover:text-[var(--color-accent-hi)]">
-          {revealed ? "Verify round →" : "How it works →"}
-        </Dialog.Trigger>
-      </div>
+      <Dialog.Trigger className="inline-flex items-center gap-1.5 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-2.5 py-1 text-[11px] font-medium text-[var(--color-text)] transition-colors duration-[var(--duration-fast)] hover:border-[var(--color-accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]">
+        <ShieldCheck className="size-3.5 text-[var(--color-accent)]" aria-hidden />
+        Provably fair
+      </Dialog.Trigger>
 
       <Dialog.Portal>
         <Dialog.Backdrop className="fixed inset-0 z-40 bg-[var(--color-bg-deep)]/85 backdrop-blur-md" />
