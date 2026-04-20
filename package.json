@@ -55,6 +55,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "drizzle-kit": "^0.31.10",
+    "fast-check": "^4.7.0",
     "lefthook": "^2.1.6",
     "tailwindcss": "^4.2.2",
     "typescript": "^5"

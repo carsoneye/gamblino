@@ -1,13 +1,15 @@
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { type DbTx, db } from "@/db";
-import { transactions, users } from "@/db/schema";
+import { transactions, users, wallets } from "@/db/schema";
+import type { CurrencyKind } from "./currencies";
 
-export type TxReason = "signup_bonus" | "bet_stake" | "bet_payout" | "adjustment";
+export type TxReason = "signup_bonus" | "daily_grant" | "bet_stake" | "bet_payout" | "adjustment";
 
 export interface TransactInput {
   userId: string;
   delta: bigint;
   reason: TxReason;
+  currencyKind?: CurrencyKind;
   idempotencyKey?: string;
   betId?: string;
   metadata?: Record<string, unknown>;
@@ -17,16 +19,18 @@ export interface TransactResult {
   balanceAfter: bigint;
   transactionId: string;
   deduped: boolean;
+  currencyKind: CurrencyKind;
 }
 
 export class InsufficientBalanceError extends Error {
   readonly code = "INSUFFICIENT_BALANCE";
   constructor(
     readonly userId: string,
+    readonly currencyKind: CurrencyKind,
     readonly balance: bigint,
     readonly delta: bigint,
   ) {
-    super(`wallet: user ${userId} balance ${balance} cannot absorb delta ${delta}`);
+    super(`wallet: user ${userId} ${currencyKind} balance ${balance} cannot absorb delta ${delta}`);
     this.name = "InsufficientBalanceError";
   }
 }
@@ -40,38 +44,67 @@ export class UserNotFoundError extends Error {
 }
 
 export async function transactWithin(tx: DbTx, input: TransactInput): Promise<TransactResult> {
-  const [locked] = await tx
-    .select({ id: users.id, balance: users.balance })
-    .from(users)
-    .where(eq(users.id, input.userId))
-    .for("update");
-  if (!locked) throw new UserNotFoundError(input.userId);
+  await tx.execute(sql`SET LOCAL statement_timeout = '5s'`);
+
+  const currency: CurrencyKind = input.currencyKind ?? "credit";
+
+  const lockWallet = async () =>
+    tx
+      .select({ balance: wallets.balance })
+      .from(wallets)
+      .where(and(eq(wallets.userId, input.userId), eq(wallets.currencyKind, currency)))
+      .for("update");
+
+  let [wallet] = await lockWallet();
+
+  if (!wallet) {
+    const [user] = await tx.select({ id: users.id }).from(users).where(eq(users.id, input.userId));
+    if (!user) throw new UserNotFoundError(input.userId);
+
+    await tx
+      .insert(wallets)
+      .values({ userId: input.userId, currencyKind: currency, balance: 0n })
+      .onConflictDoNothing();
+
+    [wallet] = await lockWallet();
+    if (!wallet) {
+      throw new Error(
+        `wallet: provision race for ${input.userId}/${currency} — row missing after insert (see ADR-0012)`,
+      );
+    }
+  }
 
   if (input.idempotencyKey) {
     const key = input.idempotencyKey;
     const existing = await tx.query.transactions.findFirst({
-      where: (t, { and, eq }) => and(eq(t.userId, input.userId), eq(t.idempotencyKey, key)),
-      columns: { id: true, balanceAfter: true },
+      where: (t, { and: a, eq: e }) => a(e(t.userId, input.userId), e(t.idempotencyKey, key)),
+      columns: { id: true, balanceAfter: true, currencyKind: true },
     });
     if (existing) {
-      return { balanceAfter: existing.balanceAfter, transactionId: existing.id, deduped: true };
+      return {
+        balanceAfter: existing.balanceAfter,
+        transactionId: existing.id,
+        deduped: true,
+        currencyKind: existing.currencyKind,
+      };
     }
   }
 
-  const balanceAfter = locked.balance + input.delta;
+  const balanceAfter = wallet.balance + input.delta;
   if (balanceAfter < 0n) {
-    throw new InsufficientBalanceError(input.userId, locked.balance, input.delta);
+    throw new InsufficientBalanceError(input.userId, currency, wallet.balance, input.delta);
   }
 
   await tx
-    .update(users)
-    .set({ balance: sql`${users.balance} + ${input.delta}` })
-    .where(eq(users.id, input.userId));
+    .update(wallets)
+    .set({ balance: sql`${wallets.balance} + ${input.delta}`, updatedAt: sql`now()` })
+    .where(and(eq(wallets.userId, input.userId), eq(wallets.currencyKind, currency)));
 
   const [row] = await tx
     .insert(transactions)
     .values({
       userId: input.userId,
+      currencyKind: currency,
       delta: input.delta,
       balanceAfter,
       reason: input.reason,
@@ -81,7 +114,7 @@ export async function transactWithin(tx: DbTx, input: TransactInput): Promise<Tr
     })
     .returning({ id: transactions.id });
 
-  return { balanceAfter, transactionId: row.id, deduped: false };
+  return { balanceAfter, transactionId: row.id, deduped: false, currencyKind: currency };
 }
 
 export async function transact(input: TransactInput): Promise<TransactResult> {

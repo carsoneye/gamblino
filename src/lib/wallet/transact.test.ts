@@ -2,29 +2,39 @@ import { beforeAll, describe, expect, it } from "bun:test";
 import { randomUUID } from "node:crypto";
 import { and, eq, sql } from "drizzle-orm";
 import { client, db } from "@/db";
-import { transactions, users } from "@/db/schema";
-import { CURRENCY_UNITS } from "./currencies";
+import { transactions, users, wallets } from "@/db/schema";
+import { CURRENCY_UNITS, type CurrencyKind } from "./currencies";
 import { InsufficientBalanceError, transact, transactWithin, UserNotFoundError } from "./transact";
 
 const c = (n: bigint) => n * CURRENCY_UNITS.credit;
 
-async function seedUser(balance = 0n): Promise<string> {
+async function seedUser(balance = 0n, currency: CurrencyKind = "credit"): Promise<string> {
   const email = `wallet+${Date.now()}-${randomUUID()}@gamblino.test`;
-  const [row] = await db.insert(users).values({ email, balance }).returning({ id: users.id });
+  const [row] = await db.insert(users).values({ email }).returning({ id: users.id });
+  await db
+    .insert(wallets)
+    .values({ userId: row.id, currencyKind: currency, balance })
+    .onConflictDoUpdate({
+      target: [wallets.userId, wallets.currencyKind],
+      set: { balance },
+    });
   return row.id;
 }
 
-async function txCount(userId: string): Promise<number> {
+async function txCount(userId: string, currency: CurrencyKind = "credit"): Promise<number> {
   const [row] = await db
     .select({ n: sql<number>`count(*)::int` })
     .from(transactions)
-    .where(eq(transactions.userId, userId));
+    .where(and(eq(transactions.userId, userId), eq(transactions.currencyKind, currency)));
   return row.n;
 }
 
-async function balance(userId: string): Promise<bigint> {
-  const [row] = await db.select({ b: users.balance }).from(users).where(eq(users.id, userId));
-  return row.b;
+async function balance(userId: string, currency: CurrencyKind = "credit"): Promise<bigint> {
+  const [row] = await db
+    .select({ b: wallets.balance })
+    .from(wallets)
+    .where(and(eq(wallets.userId, userId), eq(wallets.currencyKind, currency)));
+  return row?.b ?? 0n;
 }
 
 beforeAll(async () => {
@@ -39,6 +49,7 @@ describe("transact — credit", () => {
 
     expect(res.deduped).toBe(false);
     expect(res.balanceAfter).toBe(c(50n));
+    expect(res.currencyKind).toBe("credit");
     expect(await balance(userId)).toBe(c(50n));
     expect(await txCount(userId)).toBe(1);
   });
@@ -60,6 +71,17 @@ describe("transact — credit", () => {
     expect(row.reason).toBe("bet_payout");
     expect(row.metadata).toEqual({ note: "hello" });
     expect(row.balanceAfter).toBe(c(15n));
+    expect(row.currencyKind).toBe("credit");
+  });
+
+  it("defaults currencyKind to 'credit' when omitted", async () => {
+    const userId = await seedUser(0n);
+    const res = await transact({ userId, delta: c(1n), reason: "adjustment" });
+    const [row] = await db
+      .select()
+      .from(transactions)
+      .where(eq(transactions.id, res.transactionId));
+    expect(row.currencyKind).toBe("credit");
   });
 });
 
@@ -102,10 +124,26 @@ describe("transact — user lookup", () => {
       transact({ userId: ghost, delta: c(1n), reason: "adjustment" }),
     ).rejects.toBeInstanceOf(UserNotFoundError);
   });
+
+  it("auto-provisions a wallet row for a new currency on first tx", async () => {
+    const userId = await seedUser(c(10n), "credit");
+
+    const res = await transact({
+      userId,
+      delta: 500n,
+      reason: "adjustment",
+      currencyKind: "usd",
+    });
+
+    expect(res.balanceAfter).toBe(500n);
+    expect(res.currencyKind).toBe("usd");
+    expect(await balance(userId, "usd")).toBe(500n);
+    expect(await balance(userId, "credit")).toBe(c(10n));
+  });
 });
 
 describe("transact — idempotency", () => {
-  it("returns the first result on duplicate key without double-mutating", async () => {
+  it("returns the first result on duplicate cli_ key without double-mutating", async () => {
     const userId = await seedUser(0n);
     const key = `cli_test_${randomUUID()}`;
 
@@ -130,6 +168,44 @@ describe("transact — idempotency", () => {
     expect(await txCount(userId)).toBe(1);
   });
 
+  it("dedupes srv_ keys the same as cli_ keys", async () => {
+    const userId = await seedUser(0n);
+    const key = `srv_test_${randomUUID()}`;
+
+    const first = await transact({
+      userId,
+      delta: c(10n),
+      reason: "signup_bonus",
+      idempotencyKey: key,
+    });
+    const second = await transact({
+      userId,
+      delta: c(10n),
+      reason: "signup_bonus",
+      idempotencyKey: key,
+    });
+
+    expect(first.deduped).toBe(false);
+    expect(second.deduped).toBe(true);
+    expect(await balance(userId)).toBe(c(10n));
+    expect(await txCount(userId)).toBe(1);
+  });
+
+  it("rejects unprefixed idempotency keys at the DB CHECK", async () => {
+    const userId = await seedUser(0n);
+    const bad = `nobadprefix_${randomUUID()}`;
+
+    let caught: unknown;
+    try {
+      await transact({ userId, delta: c(1n), reason: "adjustment", idempotencyKey: bad });
+    } catch (e) {
+      caught = e;
+    }
+    expect(errorChain(caught)).toMatch(/tx_idem_prefix|check constraint/i);
+
+    expect(await txCount(userId)).toBe(0);
+  });
+
   it("treats null keys as distinct (non-deduping)", async () => {
     const userId = await seedUser(0n);
 
@@ -142,7 +218,7 @@ describe("transact — idempotency", () => {
 });
 
 describe("transact — concurrency", () => {
-  it("serializes concurrent debits via row lock; exactly the fitting ones succeed", async () => {
+  it("serializes concurrent debits via wallet-row lock; exactly the fitting ones succeed", async () => {
     const userId = await seedUser(c(100n));
     const attempts = 10;
     const stake = c(50n);
@@ -167,6 +243,66 @@ describe("transact — concurrency", () => {
   });
 });
 
+describe("transact — concurrent first-use auto-provision", () => {
+  it("does not surface spurious UserNotFoundError when many concurrent transacts hit a wallet-less user", async () => {
+    const email = `race+${Date.now()}-${randomUUID()}@gamblino.test`;
+    const [row] = await db.insert(users).values({ email }).returning({ id: users.id });
+    const userId = row.id;
+
+    const N = 20;
+    const ops = [
+      ...Array.from({ length: N / 2 }, () =>
+        transact({ userId, delta: c(10n), reason: "adjustment" }),
+      ),
+      ...Array.from({ length: N / 2 }, () =>
+        transact({ userId, delta: -c(1_000n), reason: "bet_stake" }),
+      ),
+    ];
+
+    const results = await Promise.allSettled(ops);
+
+    const rejected = results.filter((r) => r.status === "rejected") as PromiseRejectedResult[];
+    for (const r of rejected) {
+      expect(r.reason).not.toBeInstanceOf(UserNotFoundError);
+      expect(r.reason).toBeInstanceOf(InsufficientBalanceError);
+    }
+
+    const fulfilled = results.filter((r) => r.status === "fulfilled");
+    expect(fulfilled).toHaveLength(N / 2);
+    expect(rejected).toHaveLength(N / 2);
+
+    expect(await balance(userId)).toBe(c(BigInt(N / 2) * 10n));
+    expect(await txCount(userId)).toBe(N / 2);
+  });
+});
+
+describe("transact — cross-currency isolation", () => {
+  it("debiting the credit wallet does not touch the usd wallet of the same user", async () => {
+    const userId = await seedUser(c(100n), "credit");
+    await db.insert(wallets).values({ userId, currencyKind: "usd", balance: 500n });
+
+    await transact({ userId, delta: -c(30n), reason: "bet_stake" });
+
+    expect(await balance(userId, "credit")).toBe(c(70n));
+    expect(await balance(userId, "usd")).toBe(500n);
+  });
+
+  it("parallel transacts on different currencies of the same user do not serialize through one lock", async () => {
+    const userId = await seedUser(c(50n), "credit");
+    await db.insert(wallets).values({ userId, currencyKind: "usd", balance: 1_000n });
+
+    const [creditRes, usdRes] = await Promise.all([
+      transact({ userId, delta: c(1n), reason: "adjustment", currencyKind: "credit" }),
+      transact({ userId, delta: 250n, reason: "adjustment", currencyKind: "usd" }),
+    ]);
+
+    expect(creditRes.balanceAfter).toBe(c(51n));
+    expect(usdRes.balanceAfter).toBe(1_250n);
+    expect(await balance(userId, "credit")).toBe(c(51n));
+    expect(await balance(userId, "usd")).toBe(1_250n);
+  });
+});
+
 function errorChain(e: unknown): string {
   const parts: string[] = [];
   let cur: unknown = e;
@@ -180,11 +316,7 @@ function errorChain(e: unknown): string {
 describe("transact — append-only ledger", () => {
   it("blocks UPDATE on transactions at the DB level", async () => {
     const userId = await seedUser(0n);
-    const { transactionId } = await transact({
-      userId,
-      delta: c(1n),
-      reason: "adjustment",
-    });
+    const { transactionId } = await transact({ userId, delta: c(1n), reason: "adjustment" });
 
     let caught: unknown;
     try {
@@ -197,11 +329,7 @@ describe("transact — append-only ledger", () => {
 
   it("blocks DELETE on transactions at the DB level", async () => {
     const userId = await seedUser(0n);
-    const { transactionId } = await transact({
-      userId,
-      delta: c(1n),
-      reason: "adjustment",
-    });
+    const { transactionId } = await transact({ userId, delta: c(1n), reason: "adjustment" });
 
     let caught: unknown;
     try {
@@ -242,12 +370,6 @@ describe("transactWithin — composition", () => {
     ).rejects.toBeInstanceOf(InsufficientBalanceError);
 
     expect(await balance(userId)).toBe(c(10n));
-    expect(
-      await db
-        .select({ n: sql<number>`count(*)::int` })
-        .from(transactions)
-        .where(and(eq(transactions.userId, userId)))
-        .then((r) => r[0].n),
-    ).toBe(0);
+    expect(await txCount(userId)).toBe(0);
   });
 });
