@@ -1,20 +1,32 @@
+# Lefthook git-hooks config
+# Each command explicitly adds ~/.bun/bin to PATH so hooks work from
+# GUI apps, non-login shells, and agent-spawned terminals.
+
 pre-commit:
   parallel: true
   commands:
     biome:
       glob: "*.{ts,tsx,js,jsx,json,css}"
+      env:
+        PATH: "${HOME}/.bun/bin:${PATH}"
       run: bun x biome check --write --no-errors-on-unmatched {staged_files}
       stage_fixed: true
 
 commit-msg:
   commands:
     commitlint:
+      env:
+        PATH: "${HOME}/.bun/bin:${PATH}"
       run: bun x commitlint --edit {1}
 
 pre-push:
   parallel: true
   commands:
     typecheck:
+      env:
+        PATH: "${HOME}/.bun/bin:${PATH}"
       run: bun run typecheck
     test:
+      env:
+        PATH: "${HOME}/.bun/bin:${PATH}"
       run: bun test
