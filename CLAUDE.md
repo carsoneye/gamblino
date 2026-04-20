@@ -1,6 +1,6 @@
 # gamblino
 
-Play-money social casino. Originals: Crash, Mines, Plinko. No real money, no crypto, no license scope.
+Play-money social casino. Originals: Crash, Mines, Plinko, Lottery. No real money, no crypto, no license scope.
 
 ## Run
 

@@ -15,7 +15,7 @@ import {
 } from "drizzle-orm/pg-core";
 import type { AdapterAccountType } from "next-auth/adapters";
 
-export const gameKind = pgEnum("game_kind", ["crash", "mines", "plinko"]);
+export const gameKind = pgEnum("game_kind", ["crash", "mines", "plinko", "lottery"]);
 export const roundState = pgEnum("round_state", ["open", "settled", "voided"]);
 export const betStatus = pgEnum("bet_status", ["open", "won", "lost", "cashed_out", "voided"]);
 export const txReason = pgEnum("tx_reason", [

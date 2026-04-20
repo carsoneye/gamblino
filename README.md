@@ -1,6 +1,6 @@
 # gamblino
 
-Play-money social casino. Originals: Crash, Mines, Plinko. Play-money only — no real money, no crypto, no license scope.
+Play-money social casino. Originals: Crash, Mines, Plinko, Lottery. Play-money only — no real money, no crypto, no license scope.
 
 Brand: **Midnight Arcade** — editorial-luxury × neon-arcade on cosmic navy.
 
@@ -31,7 +31,7 @@ bun x biome check           # lint + format
 ```
 src/
   app/          Next.js App Router (routes + server actions)
-  components/   ui · layout · game · originals/{crash,mines,plinko}
+  components/   ui · layout · game · originals/{crash,mines,plinko,lottery}
   lib/          db · games (pure) · wallet · auth
   server/       ws.ts — Bun WebSocket server (crash engine + chat)
   store/        Zustand — balance, bet slip
