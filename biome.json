@@ -14,7 +14,11 @@
       "!**/drizzle/migrations",
       "!**/public",
       "!**/bun.lock",
-      "!**/next-env.d.ts"
+      "!**/next-env.d.ts",
+      "!**/.brain",
+      "!**/.brain",
+      "!**/handoffs",
+      "!**/handoffs"
     ]
   },
   "formatter": {

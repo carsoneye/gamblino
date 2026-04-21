@@ -41,6 +41,9 @@ Thumbs.db
 .claude/skills
 skills-lock.json
 
+# brain vault symlink — read-only strategic context, user-local
+.brain
+
 # logs
 *.log
 npm-debug.log*
