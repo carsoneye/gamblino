@@ -88,10 +88,10 @@ let envReaderPromise: Promise<GeoReader | null> | null = null;
 export function getEnvGeoReader(): Promise<GeoReader | null> {
   if (envReaderPromise === null) {
     envReaderPromise = (async () => {
-      if (!env.MAXMIND_DB_PATH) return null;
+      if (!env.MAXMIND_DB_DIR) return null;
       return openGeoReader({
-        cityDbPath: path.join(env.MAXMIND_DB_PATH, CITY_DB_FILENAME),
-        asnDbPath: path.join(env.MAXMIND_DB_PATH, ASN_DB_FILENAME),
+        cityDbPath: path.join(env.MAXMIND_DB_DIR, CITY_DB_FILENAME),
+        asnDbPath: path.join(env.MAXMIND_DB_DIR, ASN_DB_FILENAME),
       });
     })();
   }

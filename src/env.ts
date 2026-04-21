@@ -5,7 +5,7 @@ const flag = z.enum(["on", "off"]).default("on");
 const flagOff = z.enum(["on", "off"]).default("off");
 const isProd = process.env.NODE_ENV === "production";
 const secret = isProd ? z.string().min(16) : z.string().min(1).default("dev-only-insecure-secret");
-const maxmindPath = isProd ? z.string().min(1) : z.string().min(1).optional();
+const maxmindDir = isProd ? z.string().min(1) : z.string().min(1).optional();
 
 export const env = createEnv({
   server: {
@@ -30,7 +30,7 @@ export const env = createEnv({
     FLAG_CURRENCY_USDC: flagOff,
     FLAG_CURRENCY_BTC: flagOff,
     FLAG_CURRENCY_ETH: flagOff,
-    MAXMIND_DB_PATH: maxmindPath,
+    MAXMIND_DB_DIR: maxmindDir,
     UPSTASH_REDIS_REST_URL: z.string().optional(),
     UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
     WS_PORT: z.coerce.number().int().positive().default(3001),
@@ -63,7 +63,7 @@ export const env = createEnv({
     FLAG_CURRENCY_USDC: process.env.FLAG_CURRENCY_USDC,
     FLAG_CURRENCY_BTC: process.env.FLAG_CURRENCY_BTC,
     FLAG_CURRENCY_ETH: process.env.FLAG_CURRENCY_ETH,
-    MAXMIND_DB_PATH: process.env.MAXMIND_DB_PATH,
+    MAXMIND_DB_DIR: process.env.MAXMIND_DB_DIR,
     UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
     UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
     WS_PORT: process.env.WS_PORT,
