@@ -102,4 +102,7 @@ Tests: <passing count>
 Notes for phase retro: <any surprises, reviewer patterns, footguns hit>
 ```
 
-See `PHASE.md` at repo root for phase continuity.
+Two root-level continuity files:
+
+- **`PHASE.md`** — human-readable phase timeline (narrative, updated at phase start/end).
+- **`STATE.md`** — machine-readable operational snapshot for agent session-start reads (updated on every ADR ship and end-of-phase; not a live log).
