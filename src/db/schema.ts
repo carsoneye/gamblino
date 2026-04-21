@@ -38,6 +38,7 @@ export const walletLimitKind = pgEnum("wallet_limit_kind", [
   "deposit",
   "loss",
   "session_length_min",
+  "wager",
 ]);
 export const accountEventKind = pgEnum("account_event_kind", [
   "signup",
@@ -46,6 +47,7 @@ export const accountEventKind = pgEnum("account_event_kind", [
   "daily_grant_claimed",
   "limit_set",
   "limit_effective",
+  "limit_breach_rejected",
   "bet_placed",
   "bet_settled",
 ]);
@@ -257,6 +259,9 @@ export const accountEvents = pgTable(
     index("account_events_user_created_idx").on(t.userId, t.createdAt),
     index("account_events_kind_idx").on(t.kind, t.createdAt),
     uniqueIndex("account_events_signup_once").on(t.userId).where(sql`${t.kind} = 'signup'`),
+    uniqueIndex("account_events_limit_effective_once")
+      .on(sql`(${t.payload}->>'limitId')`)
+      .where(sql`${t.kind} = 'limit_effective'`),
   ],
 );
 

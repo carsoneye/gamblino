@@ -373,3 +373,154 @@ describe("transactWithin — composition", () => {
     expect(await txCount(userId)).toBe(0);
   });
 });
+
+describe("transact — limit enforcement (wager + deposit)", () => {
+  it("bet_stake exceeding the active wager limit throws LimitBreachError and leaves balance untouched", async () => {
+    const { setWalletLimit } = await import("./limits");
+    const { LimitBreachError } = await import("./limits");
+    const userId = await seedUser(c(100n));
+    await setWalletLimit({
+      userId,
+      currencyKind: "credit",
+      kind: "wager",
+      amount: c(10n),
+    });
+
+    await expect(transact({ userId, delta: -c(50n), reason: "bet_stake" })).rejects.toBeInstanceOf(
+      LimitBreachError,
+    );
+
+    expect(await balance(userId)).toBe(c(100n));
+    expect(await txCount(userId)).toBe(0);
+  });
+
+  it("writes a limit_breach_rejected account event on wager-limit rejection", async () => {
+    const { accountEvents } = await import("@/db/schema");
+    const { setWalletLimit } = await import("./limits");
+    const userId = await seedUser(c(100n));
+    const limit = await setWalletLimit({
+      userId,
+      currencyKind: "credit",
+      kind: "wager",
+      amount: c(10n),
+    });
+
+    try {
+      await transact({ userId, delta: -c(50n), reason: "bet_stake" });
+    } catch {
+      // expected
+    }
+
+    const events = await db
+      .select()
+      .from(accountEvents)
+      .where(
+        and(eq(accountEvents.userId, userId), eq(accountEvents.kind, "limit_breach_rejected")),
+      );
+    expect(events).toHaveLength(1);
+    expect(events[0].payload).toEqual({
+      limitId: limit.id,
+      kind: "wager",
+      currencyKind: "credit",
+      limitAmount: c(10n).toString(),
+      attemptedAmount: c(50n).toString(),
+      reason: "bet_stake",
+    });
+  });
+
+  it("bet_stake within the active wager limit succeeds and fires limit_effective once", async () => {
+    const { accountEvents } = await import("@/db/schema");
+    const { setWalletLimit } = await import("./limits");
+    const userId = await seedUser(c(100n));
+    await setWalletLimit({
+      userId,
+      currencyKind: "credit",
+      kind: "wager",
+      amount: c(20n),
+    });
+
+    await transact({ userId, delta: -c(15n), reason: "bet_stake" });
+    await transact({ userId, delta: -c(5n), reason: "bet_stake" });
+
+    expect(await balance(userId)).toBe(c(80n));
+    const effective = await db
+      .select()
+      .from(accountEvents)
+      .where(and(eq(accountEvents.userId, userId), eq(accountEvents.kind, "limit_effective")));
+    expect(effective).toHaveLength(1);
+  });
+
+  it("daily_grant exceeding the active deposit limit throws LimitBreachError", async () => {
+    const { setWalletLimit, LimitBreachError } = await import("./limits");
+    const userId = await seedUser(0n);
+    await setWalletLimit({
+      userId,
+      currencyKind: "credit",
+      kind: "deposit",
+      amount: c(1n),
+    });
+
+    await expect(transact({ userId, delta: c(10n), reason: "daily_grant" })).rejects.toBeInstanceOf(
+      LimitBreachError,
+    );
+
+    expect(await balance(userId)).toBe(0n);
+  });
+
+  it("daily_grant within the active deposit limit is accepted", async () => {
+    const { setWalletLimit } = await import("./limits");
+    const userId = await seedUser(0n);
+    await setWalletLimit({
+      userId,
+      currencyKind: "credit",
+      kind: "deposit",
+      amount: c(100n),
+    });
+
+    const res = await transact({ userId, delta: c(10n), reason: "daily_grant" });
+
+    expect(res.balanceAfter).toBe(c(10n));
+    expect(await balance(userId)).toBe(c(10n));
+  });
+
+  it("wager limit does not affect credits or non-bet_stake debits", async () => {
+    const { setWalletLimit } = await import("./limits");
+    const userId = await seedUser(c(100n));
+    await setWalletLimit({
+      userId,
+      currencyKind: "credit",
+      kind: "wager",
+      amount: c(1n),
+    });
+
+    // Credits are not stakes
+    await transact({ userId, delta: c(50n), reason: "bet_payout" });
+    // Non-stake debits (adjustment) are not stakes
+    await transact({ userId, delta: -c(10n), reason: "adjustment" });
+
+    expect(await balance(userId)).toBe(c(140n));
+  });
+
+  it("regression guard: loss and session_length_min limit rows persist even without enforcement", async () => {
+    const { setWalletLimit } = await import("./limits");
+    const { walletLimits } = await import("@/db/schema");
+    const userId = await seedUser(c(100n));
+
+    await setWalletLimit({ userId, currencyKind: "credit", kind: "loss", amount: c(50n) });
+    await setWalletLimit({
+      userId,
+      currencyKind: "credit",
+      kind: "session_length_min",
+      amount: 60n,
+    });
+
+    // Unenforced kinds must not block transact.
+    const res = await transact({ userId, delta: -c(90n), reason: "bet_stake" });
+    expect(res.balanceAfter).toBe(c(10n));
+
+    const rows = await db.select().from(walletLimits).where(eq(walletLimits.userId, userId));
+    expect(rows).toHaveLength(2);
+    const kinds = rows.map((r) => r.kind).sort();
+    expect(kinds).toEqual(["loss", "session_length_min"]);
+  });
+});

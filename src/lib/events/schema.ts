@@ -6,7 +6,7 @@ const CurrencyKindEnum = z.enum(["credit", "usd", "usdt", "usdc", "btc", "eth"])
 
 const GameKindEnum = z.enum(["crash", "mines", "plinko", "lottery"]);
 
-const LimitKindEnum = z.enum(["deposit", "loss", "session_length_min"]);
+const LimitKindEnum = z.enum(["deposit", "loss", "session_length_min", "wager"]);
 
 const BetStatusEnum = z.enum(["won", "lost", "cashed_out", "voided"]);
 
@@ -33,18 +33,32 @@ export const DailyGrantClaimedPayload = z
 
 export const LimitSetPayload = z
   .object({
+    limitId: z.string().uuid(),
     kind: LimitKindEnum,
     currencyKind: CurrencyKindEnum,
     amount: BigIntString,
     effectiveAt: z.string().datetime(),
+    delayed: z.boolean(),
   })
   .strict();
 
 export const LimitEffectivePayload = z
   .object({
+    limitId: z.string().uuid(),
     kind: LimitKindEnum,
     currencyKind: CurrencyKindEnum,
     amount: BigIntString,
+  })
+  .strict();
+
+export const LimitBreachRejectedPayload = z
+  .object({
+    limitId: z.string().uuid(),
+    kind: LimitKindEnum,
+    currencyKind: CurrencyKindEnum,
+    limitAmount: BigIntString,
+    attemptedAmount: BigIntString,
+    reason: z.enum(["signup_bonus", "daily_grant", "bet_stake", "bet_payout", "adjustment"]),
   })
   .strict();
 
@@ -75,6 +89,10 @@ export const AccountEvent = z.discriminatedUnion("event_kind", [
   z.object({ event_kind: z.literal("daily_grant_claimed"), payload: DailyGrantClaimedPayload }),
   z.object({ event_kind: z.literal("limit_set"), payload: LimitSetPayload }),
   z.object({ event_kind: z.literal("limit_effective"), payload: LimitEffectivePayload }),
+  z.object({
+    event_kind: z.literal("limit_breach_rejected"),
+    payload: LimitBreachRejectedPayload,
+  }),
   z.object({ event_kind: z.literal("bet_placed"), payload: BetPlacedPayload }),
   z.object({ event_kind: z.literal("bet_settled"), payload: BetSettledPayload }),
 ]);

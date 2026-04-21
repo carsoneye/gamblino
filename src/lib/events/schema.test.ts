@@ -5,6 +5,7 @@ import {
   BetPlacedPayload,
   BetSettledPayload,
   DailyGrantClaimedPayload,
+  LimitBreachRejectedPayload,
   LimitEffectivePayload,
   LimitSetPayload,
   LoginPayload,
@@ -46,36 +47,75 @@ describe("events/schema — individual payloads", () => {
     ).toThrow();
   });
 
-  it("LimitSetPayload requires ISO8601 effectiveAt", () => {
+  it("LimitSetPayload requires ISO8601 effectiveAt + limitId + delayed flag", () => {
+    const limitId = randomUUID();
     const ok = LimitSetPayload.parse({
+      limitId,
       kind: "deposit",
       currencyKind: "credit",
       amount: "1000000",
       effectiveAt: "2026-04-20T00:00:00.000Z",
+      delayed: false,
     });
     expect(ok.kind).toBe("deposit");
+    expect(ok.limitId).toBe(limitId);
+    expect(ok.delayed).toBe(false);
 
     expect(() =>
       LimitSetPayload.parse({
+        limitId,
         kind: "deposit",
         currencyKind: "credit",
         amount: "1000000",
         effectiveAt: "not-a-date",
+        delayed: true,
       }),
     ).toThrow();
   });
 
-  it("LimitEffectivePayload has no effectiveAt — it IS effective", () => {
+  it("LimitEffectivePayload requires limitId + has no effectiveAt — it IS effective", () => {
+    const limitId = randomUUID();
     expect(
-      LimitEffectivePayload.parse({ kind: "loss", currencyKind: "credit", amount: "500" }),
-    ).toEqual({ kind: "loss", currencyKind: "credit", amount: "500" });
+      LimitEffectivePayload.parse({
+        limitId,
+        kind: "loss",
+        currencyKind: "credit",
+        amount: "500",
+      }),
+    ).toEqual({ limitId, kind: "loss", currencyKind: "credit", amount: "500" });
 
     expect(() =>
       LimitEffectivePayload.parse({
+        limitId,
         kind: "loss",
         currencyKind: "credit",
         amount: "500",
         effectiveAt: "2026-04-20T00:00:00.000Z",
+      }),
+    ).toThrow();
+  });
+
+  it("LimitBreachRejectedPayload records the attempted and allowed amounts + originating reason", () => {
+    const limitId = randomUUID();
+    const ok = LimitBreachRejectedPayload.parse({
+      limitId,
+      kind: "wager",
+      currencyKind: "credit",
+      limitAmount: "1000000",
+      attemptedAmount: "2000000",
+      reason: "bet_stake",
+    });
+    expect(ok.limitId).toBe(limitId);
+    expect(ok.reason).toBe("bet_stake");
+
+    expect(() =>
+      LimitBreachRejectedPayload.parse({
+        limitId,
+        kind: "wager",
+        currencyKind: "credit",
+        limitAmount: "1000000",
+        attemptedAmount: "2000000",
+        reason: "unknown_reason",
       }),
     ).toThrow();
   });
@@ -155,7 +195,8 @@ describe("events/schema — discriminated union", () => {
     ).toThrow();
   });
 
-  it("accepts all 8 kinds declared in the DB enum", () => {
+  it("accepts all 9 kinds declared in the DB enum", () => {
+    const limitId = randomUUID();
     const samples = [
       { event_kind: "signup", payload: { source: "credentials" } },
       { event_kind: "login", payload: { method: "magic_link" } },
@@ -164,15 +205,28 @@ describe("events/schema — discriminated union", () => {
       {
         event_kind: "limit_set",
         payload: {
+          limitId,
           kind: "deposit",
           currencyKind: "credit",
           amount: "0",
           effectiveAt: "2026-04-20T00:00:00.000Z",
+          delayed: false,
         },
       },
       {
         event_kind: "limit_effective",
-        payload: { kind: "loss", currencyKind: "credit", amount: "0" },
+        payload: { limitId, kind: "loss", currencyKind: "credit", amount: "0" },
+      },
+      {
+        event_kind: "limit_breach_rejected",
+        payload: {
+          limitId,
+          kind: "wager",
+          currencyKind: "credit",
+          limitAmount: "1000",
+          attemptedAmount: "2000",
+          reason: "bet_stake",
+        },
       },
       {
         event_kind: "bet_placed",

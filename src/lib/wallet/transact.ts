@@ -1,7 +1,10 @@
 import { and, eq, sql } from "drizzle-orm";
 import { type DbTx, db } from "@/db";
 import { transactions, users, wallets } from "@/db/schema";
+import { writeAccountEvent } from "@/lib/events/write";
+import { logger } from "@/lib/logger";
 import type { CurrencyKind } from "./currencies";
+import { fireNewlyEffectiveLimitWithin, getActiveLimitWithin, LimitBreachError } from "./limits";
 
 export type TxReason = "signup_bonus" | "daily_grant" | "bet_stake" | "bet_payout" | "adjustment";
 
@@ -90,6 +93,57 @@ export async function transactWithin(tx: DbTx, input: TransactInput): Promise<Tr
     }
   }
 
+  // Per-operation limit enforcement. T5 scope: wager (bet_stake debits) +
+  // deposit (daily_grant credits today; post-license, real-deposit reasons
+  // will layer in the same place). Loss-limit enforcement needs rolling-
+  // window aggregation over the ledger — deferred to T5.5. Session-time
+  // limit needs a session-start timestamp wired into auth/WS — shipped with
+  // T9. See ADR-0016.
+  if (input.reason === "bet_stake" && input.delta < 0n) {
+    await fireNewlyEffectiveLimitWithin(tx, input.userId, currency, "wager");
+
+    const activeWager = await getActiveLimitWithin(tx, input.userId, currency, "wager");
+    if (activeWager !== null) {
+      const stake = -input.delta;
+      if (stake > activeWager.amount) {
+        throw new LimitBreachError(
+          input.userId,
+          currency,
+          "wager",
+          activeWager.id,
+          activeWager.amount,
+          stake,
+        );
+      }
+    }
+  }
+
+  if (input.reason === "daily_grant" && input.delta > 0n) {
+    await fireNewlyEffectiveLimitWithin(tx, input.userId, currency, "deposit");
+
+    const activeDeposit = await getActiveLimitWithin(tx, input.userId, currency, "deposit");
+    if (activeDeposit !== null) {
+      if (input.delta > activeDeposit.amount) {
+        throw new LimitBreachError(
+          input.userId,
+          currency,
+          "deposit",
+          activeDeposit.id,
+          activeDeposit.amount,
+          input.delta,
+        );
+      }
+    }
+  }
+
+  // TODO(T5.5): loss-limit enforcement — sum net-negative movements over a
+  // rolling window (24h / 7d / 30d) and reject if this op would push the
+  // aggregate past the active loss limit. Needs period indexing work.
+
+  // TODO(T9): session-time-limit enforcement — the auth/WS layer will
+  // disconnect a session that exceeds the active session_length_min limit.
+  // Not a transact-time concern.
+
   const balanceAfter = wallet.balance + input.delta;
   if (balanceAfter < 0n) {
     throw new InsufficientBalanceError(input.userId, currency, wallet.balance, input.delta);
@@ -118,5 +172,31 @@ export async function transactWithin(tx: DbTx, input: TransactInput): Promise<Tr
 }
 
 export async function transact(input: TransactInput): Promise<TransactResult> {
-  return db.transaction((tx) => transactWithin(tx, input));
+  try {
+    return await db.transaction((tx) => transactWithin(tx, input));
+  } catch (err) {
+    if (err instanceof LimitBreachError) {
+      // Main tx rolled back with the breach throw. Persist the rejection as
+      // an audit event in a separate tx so the breach signal survives for
+      // Phase 11 farming detection.
+      try {
+        await db.transaction((wtx) =>
+          writeAccountEvent(wtx, err.userId, {
+            event_kind: "limit_breach_rejected",
+            payload: {
+              limitId: err.limitId,
+              kind: err.kind,
+              currencyKind: err.currencyKind,
+              limitAmount: err.limitAmount.toString(),
+              attemptedAmount: err.attemptedAmount.toString(),
+              reason: input.reason,
+            },
+          }),
+        );
+      } catch (auditErr) {
+        logger.error({ err: auditErr, userId: err.userId }, "transact.limitBreachEventFailed");
+      }
+    }
+    throw err;
+  }
 }
