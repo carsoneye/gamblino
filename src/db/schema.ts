@@ -53,6 +53,7 @@ export const geoEventSource = pgEnum("geo_event_source", [
   "signup_credentials",
   "signup_magic_link_first_load",
   "login",
+  "logout",
   "ws_connect",
 ]);
 
@@ -255,6 +256,7 @@ export const accountEvents = pgTable(
   (t) => [
     index("account_events_user_created_idx").on(t.userId, t.createdAt),
     index("account_events_kind_idx").on(t.kind, t.createdAt),
+    uniqueIndex("account_events_signup_once").on(t.userId).where(sql`${t.kind} = 'signup'`),
   ],
 );
 

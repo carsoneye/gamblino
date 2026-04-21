@@ -36,6 +36,13 @@
       "when": 1776656571323,
       "tag": "0004_safe_dreaming_celestial",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1776735142037,
+      "tag": "0005_yellow_maestro",
+      "breakpoints": true
     }
   ]
 }

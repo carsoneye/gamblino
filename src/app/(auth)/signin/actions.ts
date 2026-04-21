@@ -1,9 +1,16 @@
 "use server";
 
+import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { AuthError } from "next-auth";
 import { z } from "zod";
 import { signIn } from "@/auth";
+import { db } from "@/db";
+import { users } from "@/db/schema";
+import { writeAccountEvent } from "@/lib/events/write";
+import { writeUserGeoEvent } from "@/lib/geo/write";
+import { getRequestContext } from "@/lib/http/request-context";
+import { logger } from "@/lib/logger";
 
 const credsSchema = z.object({
   email: z
@@ -51,6 +58,27 @@ export async function signinCredentialsAction(
     if (err instanceof AuthError) return { error: "Invalid email or password" };
     throw err;
   }
+
+  try {
+    const user = await db.query.users.findFirst({
+      where: eq(users.email, parsed.data.email),
+      columns: { id: true },
+    });
+    if (user) {
+      const { ip, userAgent } = await getRequestContext();
+      await db.transaction(async (tx) => {
+        await writeAccountEvent(tx, user.id, {
+          event_kind: "login",
+          payload: { method: "credentials" },
+        });
+        await writeUserGeoEvent(tx, { userId: user.id, ip, userAgent, source: "login" });
+      });
+    }
+  } catch (err) {
+    logger.error({ err }, "signin.auditFailed");
+    // Do not block login on audit-write failure.
+  }
+
   redirect(safeCallback(parsed.data.callbackUrl));
 }
 

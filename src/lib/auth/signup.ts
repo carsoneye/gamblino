@@ -6,6 +6,9 @@ import { z } from "zod";
 import { signIn } from "@/auth";
 import { db } from "@/db";
 import { users } from "@/db/schema";
+import { writeAccountEvent } from "@/lib/events/write";
+import { writeUserGeoEvent } from "@/lib/geo/write";
+import { getRequestContext } from "@/lib/http/request-context";
 import { logger } from "@/lib/logger";
 import { grantSignupBonusWithin } from "./signup-bonus";
 
@@ -48,6 +51,7 @@ export async function signupAction(
   }
   const { email, password, name } = parsed.data;
   const passwordHash = await hash(password, 10);
+  const { ip, userAgent } = await getRequestContext();
 
   let created: CreateResult;
   try {
@@ -58,6 +62,16 @@ export async function signupAction(
         .returning({ id: users.id });
       if (!row) return { ok: false, reason: "insert" };
       await grantSignupBonusWithin(tx, row.id);
+      await writeAccountEvent(tx, row.id, {
+        event_kind: "signup",
+        payload: { source: "credentials" },
+      });
+      await writeUserGeoEvent(tx, {
+        userId: row.id,
+        ip,
+        userAgent,
+        source: "signup_credentials",
+      });
       return { ok: true, id: row.id };
     });
   } catch (err) {

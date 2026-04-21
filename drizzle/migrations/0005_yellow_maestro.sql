@@ -1,0 +1,2 @@
+ALTER TYPE "public"."geo_event_source" ADD VALUE 'logout' BEFORE 'ws_connect';--> statement-breakpoint
+CREATE UNIQUE INDEX "account_events_signup_once" ON "account_events" USING btree ("user_id") WHERE "account_events"."kind" = 'signup';

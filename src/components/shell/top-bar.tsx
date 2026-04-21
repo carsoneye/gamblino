@@ -1,8 +1,13 @@
 import Link from "next/link";
-import { signOut } from "@/auth";
+import { auth, signOut } from "@/auth";
 import { Sidebar } from "@/components/shell/sidebar";
 import { SidebarDrawer } from "@/components/shell/sidebar-drawer";
 import { UserMenu } from "@/components/shell/user-menu";
+import { db } from "@/db";
+import { writeAccountEvent } from "@/lib/events/write";
+import { writeUserGeoEvent } from "@/lib/geo/write";
+import { getRequestContext } from "@/lib/http/request-context";
+import { logger } from "@/lib/logger";
 import { formatAmount } from "@/lib/wallet/currencies";
 
 type User = { balance: bigint; email: string; name: string | null };
@@ -29,6 +34,20 @@ function Authed({ user }: { user: User }) {
   const initial = (name ?? email)[0]?.toUpperCase() ?? "G";
   async function handleSignOut() {
     "use server";
+    try {
+      const session = await auth();
+      const userId = session?.user?.id;
+      if (userId) {
+        const { ip, userAgent } = await getRequestContext();
+        await db.transaction(async (tx) => {
+          await writeAccountEvent(tx, userId, { event_kind: "logout", payload: {} });
+          await writeUserGeoEvent(tx, { userId, ip, userAgent, source: "logout" });
+        });
+      }
+    } catch (err) {
+      logger.error({ err }, "signout.auditFailed");
+      // Do not block signOut on audit-write failure.
+    }
     await signOut({ redirectTo: "/" });
   }
   return (
